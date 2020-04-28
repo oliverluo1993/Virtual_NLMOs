@@ -1,0 +1,129 @@
+\documentclass[aps,prl,reprint,amsmath,amssymb]{revtex4-1}
+
+\usepackage{epsfig,color,graphicx}
+%\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{soul}
+\setcitestyle{super}
+
+% Mathematical symbols
+\newcommand*{\imi}{i} % imaginary i
+\newcommand*{\E}{\mathrm{e}}
+% DIRAC NOTATION
+% bra-ket vectors
+\newcommand{\ket}[1]{\ensuremath{\vert #1 \rangle}}
+\newcommand{\bra}[1]{\ensuremath{\langle #1 \vert}}
+\newcommand{\braket}[2]{\ensuremath{\langle #1 \vert #2 \rangle}} % bra-ket inner product
+\newcommand{\ketbra}[2]{\ensuremath{\vert #1 \rangle \langle #2 \vert}} % ket-bra outer product
+% operators
+\newcommand{\op}[1]{\ensuremath{\hat{#1}}} % operator
+
+\makeatletter
+\renewcommand\NAT@biblabelnum[1]{{(#1)}}
+\makeatother
+
+%text color
+%\newcommand{\new}{\color{red}}
+%\newcommand{\blue}{\color{blue}}
+%\newcommand{\old}{\color{black}}
+
+\begin{filecontents*}{NLMOs-ctrl.bib}
+@Control{achemso-ctrl,
+  ctrl-article-title = {yes}
+}
+\end{filecontents*}
+
+\begin{document}
+\nocite{achemso-ctrl}
+
+\bibliographystyle{achemso}
+
+\title{
+Nonorthogonal  occupied and virtual orbitals
+}
+
+\author{Ziling Luo}
+\email{ziling.luo@mail.mcgill.ca}
+\author{Rustam Z. Khaliullin}
+\email{rustam.khaliullin@mcgill.ca}
+\affiliation{Department of Chemistry, McGill University, 801 Sherbrooke St. West, Montreal, QC H3A 0B8, Canada}
+
+\date{\today}
+
+\begin{abstract}
+Comparison between various optimization algorithms for nonorthogonal  occupied and virtual orbitals based on Boys-Foster and Pipek-Mezey localization functions
+\end{abstract}
+
+
+\maketitle
+
+\section{Introduction} 
+Spatially localized orbitals are widely used in electronic structure theory.
+Occupied localized orbitals help describe, visualize and classify chemical bonding between atoms thus facilitating our understanding of electronic-structure origins of observed properties of atomistic systems.~\cite{boys1960construction, edmiston1963localized, pipek1989fast, niessen1972density, weinhold2012natural}.
+Occupied and virtual localized orbitals are crucial ingredients in all local electronic structure methods including Kohn-Sham density functional theory (DFT)~\cite{goedecker1994efficient, bowler2012methods, zalesny2011linear, pulay1986orbital, saebo2001low, pisani2005local, hampel1996local, forner1997numerical} and wavefunction-based electron correlation methods~\cite{saebo1993local, schutz1999low, hetzer2000low, schutz2001low}.
+In these methods, it is the locality of one-electron orbitals that allows to dramatically reduce the computational cost of modeling of large systems.
+
+Spatially localized orbitals are known as localized molecular orbitals (LMOs) in the field of molecular quantum chemistry and maximally localized Wannier functions (MLWFs) in solid state physics and materials science~\cite{marzari2012maximally}.
+Here, they will be collectively referred to as LMOs whereas the eigenstates of the effective one-electron Hamiltonian will be called canonical molecular orbitals (CMOs) regardless of whether the system is isolated or treated with periodic boundary conditions.
+
+Traditionally, LMOs are constructed by finding the unitary transformation of occupied or virtual CMOs that minimizes the spread of individual orbitals.
+Multiple functions have been proposed to perform the orbital localization in molecular systems, such as Boys-Foster~\cite{boys1960construction}, Edmiston-Ruedenberg~\cite{bytautas2002electron, bytautas2003split, edmiston1963localized}, Pipek-Mezey~\cite{pipek1989fast}, and Von Niessen~\cite{niessen1972density}.
+The Boys-Foster~\cite{boys1960construction} and Pipek-Mezey~\cite{pipek1989fast} localization functions are considered as two most popular and widely implemented methods, which are based on completely different approach to measure the orbital spreads.
+The Boys-Foster scheme is determined by minimizing the the sum of orbital variance and known for simply physical interpretation and low computational complexity.
+The Pipek-Mezey localization function, which maximized the sum of the squared atomic charges~\cite{mulliken1955electronic, lowdin1950non, lehtola2014pipek} of individual orbitals, provides a better bonding pattern explanation for orthogonal LMOs~(OLMOs) due to it preserves the $\sigma$-$\pi$ orbital separation during the orbital localization.
+The recent study has surprisingly shown that a pair of $\sigma$ and $\pi$ bonds tend to generated mixed $\tau$ and $\tau'$ orbitals for nonorthogonal LMOs~(NLMOs).
+Both Boys-Foster and Pipek-Mezey schemes generate reasonable localized occupied orbitals, while recent study has suggested that Pipek-Mezey scheme may produce semilocal orbitals in the case of virtual orbitals~\cite{hoyvik2013pipek} due to the system and basis set dependence property of the localization function.
+More advanced Boys-Foster function have been proposed to further localize orbitals and reduce tails, especially for virtual orbitals.~\cite{jansik2011local, hoyvik2012orbital} 
+In the case of the $\Gamma$-point approximation of the Brillouin zone for electronic structure calculations with period boundary conditions, the MLWF, which is the condensed matter equivalent representation of LMOs, have been proposed to construct through several successful and efficient optimization schemes~\cite{marzari2012maximally, resta1998quantum, resta1999electron, silvestrelli1999maximally, berghold2000general, jonsson2017theory}.
+
+Since the unitary transformation preserves the orbital metric, orthogonal LMOs~(OLMOs) are obtained through this approach due to the CMOs are orthogonal.
+Thus OLMOs tend to have orthogonalization tails, which exhibit as small non-zero values far away from the localization center.
+The tails not only reduce the orbital locality but also complicate the interpretation of chemically relevant electronic-structure information which reduce its transferability from one system to another.
+To mitigate the undesirable orthogonality effects, metric-preserving unitary transformation has been applied to nonorthogonal orbitals~\cite{hoyvik2017generalising}.
+More general variable-metric non-singular transformation ~\cite{anderson1968self, diner1968fully, magnasco1974localized, payne1977hartree, mehler1977self, feng2004An_efficient, cui2010efficient} has been proposed to further lifts the orthogonality constraint and increase the number of degrees of freedom available to localize molecular orbitals.
+The NLMOs have been proved to be more localized and have noticeable less tails than corresponding OLMOs.~\cite{feng2004An_efficient, liu2000nonorthogonal}.
+
+Despite substantial efforts haven been made to construct NLMOs~\cite{feng2004An_efficient, liu2000nonorthogonal, peng2013effective, hoyvik2017generalising}, the existing methods either produce NLMOs which are still similar to OLMOs~\cite{sundberg1979variationally} or lead to the linear dependence between the orbitals~\cite{feng2004An_efficient}.
+To overcome the linear dependence problem, Yang and co-workers~\cite{feng2004An_efficient, cui2010efficient} have developed a localization method in which the centers of NLMOs are fixed during the minimization of the localization function. 
+A new approach has recently been proposed to perform direct unconstrained variable-metric localization of occupied orbitals that allows to obtain NLMOs without pre-determining the orbital centers.~\cite{luo2020direct} 
+
+The crucial step to obtain the LMOs is the optimization of the localization functions, which is conventional achieved by simple Jacobi rotations~\cite{edmiston1963localized, barr1975improved} or exponential~\cite{berghold2000general} or Cayley parameterization of unitary transformations combined with line search methods.
+The Jacobi rotations, which are based on consecutive two-by-two rotations of orbitals pairs, are able to properly localize occupied orbitals, but the optimization process may be slow and converge to nonoptimal solutions, especially for large and complicated systems.
+Furthermore, the Jacobi rotations might not work at all in the case of virtual orbitals.
+
+The line search methods have been found to be more efficient than the two-by-two orbital transformation for occupied orbitals, even for the simplest steepest descent approach~\cite{edmiston1965localized}.
+The conjugate gradient methods, which also predict the new direction only based on the gradient, fail to significantly improve the efficiency compared with the steepest descent method as initially expected.~\cite{ryback1978application}
+Multiple second-order methods have also been suggested to accelerate the localization process of occupied orbitals by using the information from the gradient and hessian.~\cite{leonard1982quadratically, kari1984parametrization}
+Even though the Hessian involved methods are more time consuming compared with first-order methods, they successfully reduce the necessary amount of iterations by 1-2 orders of magnitude~\citet{leonard1982quadratically}.
+The Quasi-Newton methods such as Broyden-Fletcher-Goldfarb-Shanno~(BFGS) algorithm have also been implemented to localize molecular orbitals.~\cite{kari1984parametrization}
+
+Due to the fact that there are multiple not well separated local minimum of the localization functions in the case of virtual orbitals~\cite{subotnik2005fast}, convergence is slow and painful for both first-order and second-order line search methods.
+Moreover, the negative Hessian eigenvalues in the initial iterations of orbital localization prevent correctly predicting new directions, therefore the line search methods may fail in the early stage of the optimization process.
+
+More recently, the trust region methods have been demonstrated as an ideal optimization algorithm to localize both occupied and virtual orbitals with various localization functions.~\cite{jansik2011local, hoyvik2012trust, hoyvik2012orbital,hoyvik2013pipek}
+However, the comparison between different localization functions has suggested the virtual orbitals obtained by Boy-Foster and Pipek-Mezey schemes are less localized than more advanced and complicated localization schemes.~\cite{hoyvik2013localized} 
+
+Multiple optimization methods have also been implemented for localizing nonorthogonal orbitals.
+The trust region methods have successfully applied to metric-preserving nonorthogonal occupied and virtual orbitals.~\cite{hoyvik2017generalising}
+The line search methods such as conjugated gradient~\cite{liu2000nonorthogonal}, the Newton method~\cite{feng2004An_efficient} and BFGS method~\cite{cui2010efficient} have been suggested to localize variable-metric nonorthogonal occupied orbitals.
+
+In this work, we designed, tested and compared a variety of line search and trust region algorithms to perform direct unconstrained variable-metric localization of occupied and virtual orbitals. [Currently, there are no reports/methods for variable-metric localization of virtual orbitals (is it true?). Here, we do not only discuss optimization algorithms but also compare, for the first time, virtual NLMOs generated with Boys and PM localization functions.]
+
+
+\section{Methodology}
+
+
+\section{Results and discussion}
+
+\section{Conclusions}
+
+
+\section{Acknowledgments} 
+
+
+%\bibliographystyle{abbrv}
+\bibliography{Virtuals,Virtuals-ctrl}
+
+\end{document}
+
