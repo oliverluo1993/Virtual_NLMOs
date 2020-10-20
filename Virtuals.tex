@@ -482,7 +482,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{occupied_iter.pdf}
-\caption{Orthogonal (middle) and nonorthogonal (right) LMOs of three-center-two-electron B-B-B bond in the carborane molecule C$_2$B$_{10}$H$_{12}$. The isosurface value is 0.04~a.u.}
+\caption{Total steps of each $\alpha$ iteration for occupied carborane, borophene, decacyclene and graphene systems}
 \label{fig:boro}
 \end{figure*}
 
@@ -490,7 +490,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{occupied_grad.pdf}
-\caption{Orthogonal (middle) and nonorthogonal (right) LMOs of three-center-two-electron B-B-B bond in the carborane molecule C$_2$B$_{10}$H$_{12}$. The isosurface value is 0.04~a.u.}
+\caption{Performance of search direction schemes in the occupied Berghold localization of the MOs}
 \label{fig:boro}
 \end{figure*}
 
@@ -498,40 +498,33 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{occupied_walltime.pdf}
-\caption{Orthogonal (middle) and nonorthogonal (right) LMOs of three-center-two-electron B-B-B bond in the carborane molecule C$_2$B$_{10}$H$_{12}$. The isosurface value is 0.04~a.u.}
+\caption{Walltime comparison of the most time consuming $\alpha$ iteration in the occupied Berghold localization}
 \label{fig:boro}
 \end{figure*}
 
 
-
-
-\begin{table*}[htbp]
-\caption{The relative reduction in the localization function and the final determinant of the NLMO overlap.}
-\label{tab:loc}
+\begin{figure*}[htb]
 \centering
-\begin{tabular}{l c c c c}
-\hline\hline
-Molecules & $\Delta_{\text{OLMOs/CMOs}}$  & $\Delta_{\text{NLMOs/CMOs}}$ & $\Delta_{\text{NLMOs/OLMOs}}$ & $\det(\sigma)$ \\
-\hline
-H$_2$O & 22 & 36 & 18 & 0.100 \\ 
-CO$_2$ & 65 & 76 & 30 & 0.025 \\
-Diborane (B$_2$H$_6$) & 62 & 64 & 6.2 & 0.745 \\
-Borazine (B$_3$N$_3$H$_6$) & 73 & 78 & 20 & 0.026 \\
-Carborane (C$_2$B$_{10}$H$_{12}$) & 72 & 76 & 17 & 0.085 \\ 
-Propene (C$_3$H$_6$) & 61 & 67 & 14 & 0.042 \\
-1-Butyne (C$_4$H$_6$) & 62 & 70 & 19 & 0.063 \\
-Benzene (C$_6$H$_6$) & 69 & 78 & 28 & 0.041 \\ 
-Heptane (C$_7$H$_{16}$) & 89 & 90 & 12 & 0.122 \\ 
-Icosane (C$_{20}$H$_{42}$) & 98 & 98 & 11 & 0.053 \\ 
-Decacyclene (C$_{72}$H$_{24}$) & 94 & 95 & 16 & 0.042 \\ 
-Graphene & 77 & 82 & 21 & 0.025 \\
-\hline
-Average & 70 & 76 & 18 & 0.114 \\
-\hline
-\hline
-\end{tabular}
-\label{table:nonlin}
-\end{table*}
+\includegraphics[width=\textwidth]{virtual_iter.pdf}
+\caption{Total steps of each $\alpha$ iteration for virtual carborane, borophene, decacyclene and graphene systems}
+\label{fig:boro}
+\end{figure*}
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{virtual_grad.pdf}
+\caption{Performance of search direction schemes in the virtual Berghold localization of the MOs}
+\label{fig:boro}
+\end{figure*}
+
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{virtual_walltime.pdf}
+\caption{Walltime comparison of the most time consuming $\alpha$ iteration in the virtual Berghold localization}
+\label{fig:boro}
+\end{figure*}
+
 
 \section{Conclusions}
 
