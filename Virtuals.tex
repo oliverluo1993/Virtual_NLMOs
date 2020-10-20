@@ -19,6 +19,7 @@
 % operators
 \newcommand{\op}[1]{\ensuremath{\hat{#1}}} % operator
 
+
 \makeatletter
 \renewcommand\NAT@biblabelnum[1]{{(#1)}}
 \makeatother
@@ -143,11 +144,425 @@ In this work, we designed, tested and compared a variety of line search and trus
 [Do we expect more significant reduction in orbital locality for virtual NLMOs than for occupied NLMOs?]
 
 \section{Methodology}
+\subsection{Theory and Implementation}
+In this work, the conventional tensor notation is used to work with the nonorthogonal orbitals~\cite{head1998tensor}: covariant quantities are denoted with subscripts, contravariant quantities with superscripts and summation is implied over the same covariant and contravariant orbital indices. Summation is not implied if two indices are both covariant. 
+
+In order to obtain a set of nonorthogonal localized molecular orbitals, the conventional localization function $\Omega_L$ has been suggested to eliminates unphysical states with linearly dependent orbitals by introducing a penalty function  $\Omega_P$.~\cite{luo2020direct} 
+%
+\begin{equation} \label{eq:fun-overall}
+\begin{split}
+\Omega = \Omega_L + c_P \Omega_P, \\
+\end{split}
+\end{equation}
+%
+where $c_P > 0$ is the penalty strength.
+The NLMOs $\ket{i}$ are expressed as a linear combination of one-electron states $\ket{j_0}$
+
+%
+\begin{equation}
+\begin{split}
+\ket{i} = \ket{j_0} {A^j}_i 
+\end{split}
+\end{equation}
+%
+The initial occupied one-electron states are not required to be canonical or orthogonal but need to be normalized and linearly independent, which both preserve the generality of the method and guarantee the overlap matrix is invertible. The initial virtual orbitals are randomly generated followed by projecting out the occupied subspace and orthogonalization.
+
+The Berghold localization function~\cite{resta1998quantum, resta1999electron, berghold2000general}  adopted in this work is equivalent to the Boys-Foster localization scheme~\cite{berghold2000general, resta1999electron} for gas-phase system and only able to describe the electronic states within the  $\Gamma$-point approximation for periodic system:
+%
+\begin{equation} \label{eq:fun-loc}
+\begin{split}
+\Omega_L(\mathbf{A}) &= - \sum_K \sum_i \omega_K \vert z_{i}^{K} \vert^2, \\
+z_{i}^{K} &= {A^m}_i B^{K}_{mn} {A^n}_i, \\
+B^{K}_{mn} &= \bra{m_0} \E^{\imi \mathbf{G}_K \cdot \mathbf{\op{r}}} \ket{n_0}
+\end{split}
+\end{equation}
+%
+where $\mathbf{\op{r}}$ is the position operator in three dimensions, $\omega_K$ and $\mathbf{G}_K$ are suitable sets of weights and reciprocal lattice vectors, respectively, labeled by index $K$~\cite{silvestrelli1999maximally, berghold2000general}. 
+
+We also implement the Pipek-Mezey localization function~\cite{pipek1989fast,lehtola2014pipek} to investigate and compare the locality of virtual NLMOs generated with Boys-Foster and Pipek-Mezey localization functions.:
+%
+\begin{equation} \label{eq:pipek}
+\begin{split}
+\Omega_L^{\text{PM}}(\mathbf{A}) &= - \sum_{K=1}^{\text{Atoms}} \sum_i \vert z_{i}^{K} \vert^2, \\
+z_{i}^{K} &= {A^m}_i B^{K}_{mn} {A^n}_i, \\
+B^{K}_{mn} &= \frac{1}{2} \sum_{\mu \in K} \bra{m_0}  \left( \ketbra{\chi_{\mu}}{\chi^{\mu}} + \ketbra{\chi^{\mu}}{\chi_{\mu}} \right) \ket{n_0}
+\end{split}
+\end{equation}
+%
+where $z_{i}^{K}$ is the (real) contribution of orbital $i$ to the Mulliken charge of atom $K$, $\ket{\chi_\mu}$ and $\ket{\chi^\mu}$ are atom-centered covariant and contravariant basis set functions~\cite{silvestrelli1999maximally, berghold2000general}. The summation over $\mu$ is written explicitly to emphasize that it is restricted to the basis functions centered on atom $K$. 
+The Pipek-Mezey localization function is know for the ability to preserve the separation of $\sigma$ and $\pi$ bonds, but the recent study has demonstrated the $\sigma$-$\pi$ separation cannot be expected for NLMOs~\cite{luo2020direct}.
+
+The penalty function is defined as in Eq.~(\ref{eq:fun-pen}) since the determinant of the NLMO overlap matrix $\sigma$ is suggested as a convenient measurement of linear dependence of orbitals. 
+%
+\begin{equation} \label{eq:fun-pen}
+\begin{split}
+\Omega_P(\mathbf{A}) &= - \ln \det \left[ \sigma (\mathbf{A}) \right], \\
+\sigma_{kl} &= \braket{k}{l} = {A^j}_k \sigma_{ji}^0{A^i}_l
+%= (\mathbf{A}^\dagger \mathbf{T}^\dagger \mathbf{ S T A})_{kl},
+\end{split}
+\end{equation}
+%
+The penalty strength $c_P$ plays an important role during the optimization procedure, so the initial value of  $c_P$ should be wisely chosen  to balance  approximately the localization and penalty components of $\Omega$, which has been proposed to achieve the reduction in $\Omega_L$ upon the minimization of $\Omega$ has the same order of magnitude as the change in the penalty  $c_P\Omega_P$.
+%
+\begin{equation} \label{eq:cp-beta}
+\begin{split} 
+%\Omega_L(\mathbf{I}) + c_P \Omega_P(\mathbf{I}) & \sim \Omega_{L}(\mathbf{A}^{\ast}) - c_P \ln \text{D}_{\text{tar}} \\
+c_P^{\text{init}} & \sim \frac{ \Omega_{L}(\mathbf{I}) - \Omega_{L}(\mathbf{A}^{\ast}) }{ \Omega_{P}(\mathbf{A}^{\ast}) - \Omega_{P}(\mathbf{I}) } = \frac{ \beta_L^{\ast} }{ \beta_P^{\ast} } \times \Omega_{L}(\mathbf{I}) \equiv \alpha \times \Omega_L(\mathbf{I})
+\end{split}
+\end{equation}
+%
+where $\mathbf{A}^{\ast}$ denotes the (yet unknown) solution to the minimization problem, 
+%
+\begin{equation} 
+\begin{split} 
+\beta_L^{\ast} \equiv \frac{\Omega_L(\mathbf{I})- \Omega_L(\mathbf{A}^{\ast})}{\Omega_L(\mathbf{I})} \in [0,1]
+\end{split}
+\end{equation}
+%
+is the (positive) expected relative reduction in the localization function, and 
+%
+\begin{equation} \label{eq:betap}
+\begin{split} 
+\beta_P^{\ast} \equiv \ln \frac{\det \sigma(\mathbf{I})}{ \det \sigma(\mathbf{A}^{\ast}) } \approx \ln \frac{\det \sigma(\mathbf{I})}{ \text{D}_{\text{tar}} } \equiv \beta_P > 0
+\end{split}
+\end{equation}
+%
+is the logarithm of the ratio of the initial and final determinants.
+By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1} 10$ should be an appropriated estimation for the optimization of canonical orbitals to the NLMOs with determinant $ \text{D}_{\text{tar}} \approx 0.1$.
+
+\subsection{Line Search Methods}
+
+\begin{figure}
+\begin{algorithm}[H]
+  \caption{Line search minimization of $\Omega$}
+  \label{alg:cg}
+   \begin{algorithmic}[1]
+   	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
+	\State Input $\epsilon$ \Comment{Localization convergence threshold}
+	\State Input $\text{D}_{\text{tar}}$ \Comment{Minimum allowed NLMO determinant}
+   	\State Input $\mathbf{T}_0$ \Comment{Initial basis set coefficients for $\ket{i_0}$}
+   	\State Input $\mathbf{S}$ \Comment{Basis set overlap}
+   	\State Input $\mathbf{L}^K$ \Comment{Basis set representation of the localization operator} 
+   	\State $\mathbf{\sigma}_0 \gets \mathbf{T}_0^{\dagger} \mathbf{ST}_0$ \Comment{Initial orbital overlap} 
+   	\State $\mathbf{B}^{K} \gets \mathbf{T}_0^{\dagger} \mathbf{L}^K \mathbf{T}_0$ \Comment{Initial localization matrix, Eq.~(\ref{eq:fun-loc})} 
+	\State $\mathbf{a} \gets \mathbf{I}$ \Comment{Initial guess on variational parameters}
+	%\State Converged $\gets$ False
+	\State StopOuter $\gets$ False \Comment{Flag to exit the outer loop}
+	\State $i_{\text{Outer}} \gets 0$ \Comment{Iteration counter}
+	\Repeat \Comment{Loop to change the penalty strength}
+		\State $i \gets i_{\text{Outer}} + 1$ 
+		\State Stop $\gets$ False \Comment{Flag to exit the optimization loop}
+		\State $i \gets 0$ \Comment{Iteration counter}
+%		\State $\beta \gets 0$ \Comment{Reset conjugation}
+		\Repeat \Comment{Fixed-penalty localization loop}
+			\State $i \gets i + 1$ 
+			\State $\mathbf{A} \gets \mathbf{a} \left[ \text{diagonal}(\mathbf{a}^{\dagger} \mathbf{\sigma}_0 \mathbf{a}) \right]^{-\frac{1}{2}}$ \Comment{Update NLMOs}
+			\State $\mathbf{\sigma} \gets \mathbf{A}^{\dagger}\mathbf{\sigma}_0 \mathbf{A}$ \Comment{Update overlap}
+			\State $\text{Det} \gets \text{determinant} (\mathbf{\sigma})$ \Comment{Determinant}
+			\State $\Omega_{P} \gets - \ln [\text{Det}] $ \Comment{Orthogonalization function}
+			\State $\mathbf{P} \gets \text{Eq~(\ref{eq:grad-pen}) and~(\ref{eq:grad-convert})}$ \Comment{Orthogonalization gradient}
+			\State $\Omega_{L} \gets \text{Eq~(\ref{eq:fun-loc})}$ \Comment{Localization function}
+			\State $\mathbf{L} \gets \text{Eq~(\ref{eq:grad-loc}) and~(\ref{eq:grad-convert})}$ \Comment{Localization gradient}
+			\If{$i_{\text{Outer}}=1$ \textbf{and} $i=1$} 
+				\State $c_{P} \gets \Omega_{L}(\ln [\text{Det} / \text{D}_{\text{tar}} ])^{-1}$ \Comment{Initial strength}
+			\EndIf
+			\State $\Omega \gets \Omega_{L} + c_P \Omega_{P} $ 
+			\If{$i>1$}
+				\State $\mathbf{\Gamma} \gets \mathbf{G}$ \Comment{Save old gradient}
+			\EndIf 
+			\State $\mathbf{G} \gets \mathbf{L} + c_P \mathbf{P} $ 
+			%\State $\text{Error}_\text{CG} \gets \vert\vert \mathbf{G} \vert \vert_{\text{max}}$
+			\If{$\vert\vert \mathbf{G} \vert \vert_{\text{max}} < \epsilon$}
+				\State Stop $\gets$ True
+			\EndIf
+			
+			\If{\textbf{not} Stop}
+				\State $D \gets $ \text{Key difference between line search methods} \Comment{Search direction}
+				\State $\alpha \gets \text{argmin}_{\alpha} \Omega(\mathbf{a} + \alpha \mathbf{D})$ \Comment{Line search}
+				\State $\mathbf{a}\gets \mathbf{a} + \alpha \mathbf{D}$ \Comment{Update variational DOFs}
+			\EndIf
+		\Until{Stop} 
+		\If{$\text{Det} < \text{D}_{\text{tar}}$ \textbf{or} $i_{\text{Outer}} > N_{\text{Outer}}^{\text{Max}}$}
+			\State StopOuter $\gets$ True
+		\EndIf
+		\If{$i_{\text{Outer}}>1$} 
+			\State $c_{P} \gets c_P \cdot r$ \Comment{Reduce $c_P$ by factor $r \in (0,1)$}
+		\EndIf
+	\Until{StopOuter}
+	\State $\mathbf{return}$ $\mathbf{T} \gets \mathbf{T}_0 \mathbf{A} $ \Comment{Return NLMOs coefficients}
+	%\EndProcedure
+   \end{algorithmic}
+\end{algorithm}
+\caption{\label{fig:cg} Line search algorithm for the optimization of NLMOs.}
+\end{figure}
+Line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
+%
+\begin{equation} \label{eq:LS_methods}
+\begin{split} 
+a_{k+1} = a_{k} + \alpha_{k}D_{k}
+\end{split}
+\end{equation}
+%
+The descent direction has been suggested by various methods. In this work, we will implement and compare the NLMO optimization between gradient descent, conjugate gradient~(CG),  \emph{quasi}-Newton methods such as limited-memory Broyden–Fletcher–Goldfarb–Shanno~(BFGS) ,and hybrid CG-BFGS. The general descent direction of gradient methods takes the following form:
+%
+\begin{equation} \label{eq:descent_dir}
+\begin{split}
+D_{k+1} = -G_{k+1} + \beta_k D{k}
+\end{split}
+\end{equation}
+%
+where  $\beta_0=0$, and for $k \geq 1$
+\begin{equation} \label{eq:beta}
+\begin{split}
+\beta_{k}^\text{GD} &= 0, \\
+\beta_{k}^\text{CGFR} &= \frac{\lVert{G_{k+1}}\rVert^2}{\lVert{G_{k}}\rVert^2} \\
+\beta_{k}^\text{CGDY} &=  \frac{\lVert{G_{k+1}}\rVert^2}{D_{k}^{T}(G_{k+1}-G_{k})} \\
+\end{split}
+\end{equation}
+%
+CGFR and CGDY correspond to the Fletcher-Reeves~\citep{fletcher1964function}  and Dai-Yuan~\cite{dai1999nonlinear} choices for the conjugate gradient update factor
+
+
+The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$  required in Eq.~(\ref{eq:descent_dir}) is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
+%
+\begin{equation} \label{eq:grad}
+\begin{split}
+G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
+\end{split}
+\end{equation}
+%
+
+%
+\begin{equation} \label{eq:grad-convert}
+\begin{split}
+{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - ( \sigma_{in}^0 {A^n}_j ) ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j 
+\end{split}
+\end{equation}
+%
+\begin{equation} \label{eq:grad-loc}
+\begin{split}
+\tilde{L}{_k}^l & = - \sum_K {4 \omega_K} \times \\ 
+%%%: this was for the log function \tilde{L}{_k}^l & = - \sum_K \frac{4 \omega_K}{\vert z_{l}^{K} \vert^2} \times \\ 
+&\times \left[  \operatorname{Re}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Re}(z_{l}^{K}) + \operatorname{Im}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Im}(z_{l}^{K}) \right]
+\end{split}
+\end{equation}
+%
+\begin{equation} \label{eq:grad-pen}
+\begin{split}
+\tilde{P}{_k}^l & = -2 \sigma_{km}^0 {A^m}_n \sigma^{nl} 
+\end{split}
+\end{equation}
+%
+If the gradient in Eq.~(\ref{eq:grad-loc}) is computed for the Pipek-Mezey localization function, weights $\omega_K$ are equal to one and the imaginary part of $z_{i}^{K}$ is equal to zero.
+
+In Newton and \emph{quasi}-Newton  methods, the search direction $D_{k}$ is given by the solution of the analogue of the Newton equation:
+%
+\begin{equation} \label{eq:newton_dir}
+\begin{split}
+D_{k} = -H_{k}^{-1}G_{k}
+\end{split}
+\end{equation}
+%
+By applying the approximate Hessian matrix~$B_{k}$ (or more frequently the inverse of approximate Hessian matrix~$B_{k}^{-1}$),  the \emph{quasi}-Newton methods are expected to converge faster compared with gradient methods without computing the exact Hessian matrix. The BFGS method is one of the most popular members among  \emph{quasi}-Newton methods. The inverse of the approximate Hessian matrix is defined by 
+%
+\begin{equation} \label{eq:bfgs_inverH}
+\begin{split}
+B_{k+1}^{-1}  &= (I - \rho_{k}s_{k}y_{k}^{T})B_{k}^{-1}(I - \rho_{k}y_{k}s_{k}^{T}) + \rho_{k}s_{k}s_{k}^{T} \\
+\rho_{k} &= \frac{1}{y_{k}^{T}s_{k}}
+\end{split}
+\end{equation}
+%
+where $y_{k} = G_{k+1} - G_{k}, s_{k} = a_{k+1} - a_{k}$.
+The limited-memory BFGS~(L-BFGS) method uses the curvature information from only the most recent iterations to construct the inverse of Hessian approximation by applying a recursive procedure, which is particular well suited for solving large problems whose Hessian matrix cannot be computed at a reasonable cost or are not sparse.
+
+The hybrid CG-BFGS methods combines the best properties of both BFGS and CG methods and are expected to significantly improve the total number of iterations and computing time. 
+%
+\begin{equation} \label{eq:hybrid_dir}
+\begin{split}
+D_{k+1} &= -B_{k+1}^{-1}G_{k+1} - l_{k+1}G_{k+1} + \beta_{k+1}^{LSCD}D_{k}, \\
+l_{k+1} &= 1 + \beta_{k+1}^\text{LSCD}\frac{G_{k+1}^{T}D_{k}}{\lVert G_{k+1}\rVert^{2}}
+\end{split}
+\end{equation}
+%
+where $\beta_{k}^\text{LSCD}$ is defined as 
+%
+\begin{equation} \label{eq:beta_LSCD}
+\begin{split}
+\beta_{k+1}^{LS} &= \frac{y_{k}^{T}G_{k+1}}{-G_{k}^{T}D_{k}}, \beta_{k+1}^{CD} = \frac{\lVert G_{k+1}\rVert^2}{-G_{k}^{T}D_{k}}, \\
+\beta_{k+1}^{LSCD} &= \max\Big\{0, \min\Big\{\beta_{k+1}^{LS}, \beta_{k+1}^{CD}\Big\}\Big\}
+\end{split}
+\end{equation}
+%
+
+\subsection{Trust Region Methods}
+
+\begin{figure}
+\begin{algorithm}[H]
+  \caption{Trust region minimization of $\Omega$}
+  \label{alg:tr}
+   \begin{algorithmic}[1]
+   	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
+	\State Input $\epsilon_{\text{TR}}$ \Comment{Localization convergence threshold}
+	%\State Input $N_{\text{CG}}$, $N_{\text{Outer}}$ \Comment{Max CG, outer iterations}
+	\State Input $\text{D}_{\text{tar}}$ \Comment{Minimum allowed NLMO determinant}
+   	\State Input $\mathbf{T}_0$ \Comment{Initial basis set coefficients for $\ket{i_0}$}
+   	\State Input $\mathbf{S}$ \Comment{Basis set overlap}
+   	\State Input $\mathbf{L}^K$ \Comment{Basis set representation of the localization operator} 
+   	\State $\mathbf{\sigma}_0 \gets \mathbf{T}_0^{\dagger} \mathbf{ST}_0$ \Comment{Initial orbital overlap} 
+   	\State $\mathbf{B}^{K} \gets \mathbf{T}_0^{\dagger} \mathbf{L}^K \mathbf{T}_0$ \Comment{Initial localization matrix, Eq.~(\ref{eq:fun-loc})} 
+	\State $\mathbf{a} \gets \mathbf{I}$ \Comment{Initial guess on variational parameters}
+	%\State Converged $\gets$ False
+	\State StopOuter $\gets$ False \Comment{Flag to exit the outer loop}
+	\State $i_{\text{Outer}} \gets 0$ \Comment{Iteration counter}
+	\Repeat \Comment{Loop to change the penalty strength}
+		\State $i_{\text{Outer}} \gets i_{\text{Outer}} + 1$ 
+		\State StopTR $\gets$ False \Comment{Flag to exit the TR loop}
+		\State $i_{\text{TR}} \gets 0$ \Comment{Iteration counter}
+%		\State $\beta \gets 0$ \Comment{Reset conjugation}
+		\Repeat \Comment{Fixed-penalty localization loop}
+			\State $i_{\text{TR}} \gets i_{\text{TR}} + 1$ 
+			\State $\mathbf{A} \gets \mathbf{a} \left[ \text{diagonal}(\mathbf{a}^{\dagger} \mathbf{\sigma}_0 \mathbf{a}) \right]^{-\frac{1}{2}}$ \Comment{Update NLMOs}
+			\State $\mathbf{\sigma} \gets \mathbf{A}^{\dagger}\mathbf{\sigma}_0 \mathbf{A}$ \Comment{Update overlap}
+			\State $\text{Det} \gets \text{determinant} (\mathbf{\sigma})$ \Comment{Determinant}
+			\State $\Omega_{P} \gets - \ln [\text{Det}] $ \Comment{Orthogonalization function}
+			\State $\mathbf{P} \gets \text{Eq~(\ref{eq:grad-pen}) and~(\ref{eq:grad-convert})}$ \Comment{Orthogonalization gradient}
+			\State $\Omega_{L} \gets \text{Eq~(\ref{eq:fun-loc})}$ \Comment{Localization function}
+			\State $\mathbf{L} \gets \text{Eq~(\ref{eq:grad-loc}) and~(\ref{eq:grad-convert})}$ \Comment{Localization gradient}
+			\If{$i_{\text{Outer}}=1$ \textbf{and} $i_{\text{TR}}=1$} 
+				%\State $c_{P} \gets \text{Tr}(\mathbf{L}^{\dagger} \mathbf{P})/\text{Tr}(\mathbf{P}^{\dagger}\mathbf{P})$
+				\State $c_{P} \gets \Omega_{L}(\ln [\text{Det} / \text{D}_{\text{tar}} ])^{-1}$ \Comment{Initial strength}
+			\EndIf
+			\State $\Omega \gets \Omega_{L} + c_P \Omega_{P} $ 
+			\If{$i_{\text{TR}}>1$}
+				\State $\mathbf{\Gamma} \gets \mathbf{G}$ \Comment{Save old gradient}
+			\EndIf 
+			\State $\mathbf{G} \gets \mathbf{L} + c_P \mathbf{P} $ 
+			%\State $\text{Error}_\text{CG} \gets \vert\vert \mathbf{G} \vert \vert_{\text{max}}$
+			\If{$\vert\vert \mathbf{G} \vert \vert_{\text{max}} < \epsilon_{\text{TR}}$}
+				\State StopTR $\gets$ True
+			\EndIf
+%			\If{$i_{\text{CG}}=1$ \textbf{And} $i_{\text{Outer}}=1$}
+%				\State StopCG $\gets$ False \Comment{Do first iteration}
+%			\EndIf
+			\If{\textbf{not} StopTR}
+%				\If{$i_{\text{CG}} = 1$}
+%					\State $\mathbf{P}^{R_c} \gets \text{Eq.\ref{eq:prec}}(\mathbf{F},\mathbf{M}^{R_c},\mathbf{K}^{R_c}) $\Comment{Precon.}
+%				\Else
+%					\State $\mathbf{O}_{R_c} \gets \mathbf{D}_{R_c}$ \Comment{Save old direction}
+%				\EndIf
+                 \State BorderReached $\gets$ False \Comment{Flag to touch the inner border}
+                 \State StopInner $\gets$ False \Comment{Flag to exit the TR Inner loop}
+                 \Repeat \Comment{TR subproblem loop}
+                    \State Curvature $\gets$  $\mathbf{G}^{T}\mathbf{H}\mathbf{G}$
+                    \If{Curvature $<$ 0}
+                       \State $\tau$ \Comment{Step size to reach the TR border}
+                       \State StopInner $\gets$ True
+                       \State BorderReached $\gets$ True
+                       \State  $m(0)-m(\mathbf{D})$ $\gets$  $\mathbf{G}^{T}\mathbf{D}+\frac{1}{2}\mathbf{D}^{T}\mathbf{H}\mathbf{D}$
+                       \State \textbf{break}
+                    \Else
+                       \State $\mathbf{D}$ \Comment{Compute Step}
+                       \State  $m(0)-m(D)$ $\gets$  $\mathbf{G}^{T}\mathbf{D}+\frac{1}{2}\mathbf{D}^{T}\mathbf{H}\mathbf{D}$
+                    \EndIf
+                 \Until{StopInner} 
+                 \State $\rho$ $\gets$ $(\Omega(\mathbf{a}+\mathbf{D})-\Omega(\mathbf{a})) / (m(0)-m(\mathbf{D}))$
+                 \If{$\rho < \frac{1}{4}$}
+                    \State $\Delta \gets \frac{1}{4}\Delta$
+                 \Else
+                 \algstore{bkbreak}
+   \end{algorithmic}
+\end{algorithm}
+\end{figure}
+
+\begin{figure}
+\addtocounter{algorithm}{-1}
+\begin{algorithm}[H]
+\caption{Trust region minimization of $\Omega$}
+   \begin{algorithmic}[1]
+   \algrestore{bkbreak}
+                    \If{$\rho > \frac{3}{4}$ \textbf{and} BorderReached}
+                       \State $\Delta \gets \min{(2\Delta, \hat{\Delta})}$
+                     \Else
+                        \State $\Delta \gets \Delta$ \Comment{Remain the same}
+                     \EndIf
+                 \EndIf
+                 \If{$\rho > \eta$}
+                    \State $\mathbf{a}\gets \mathbf{a} + \alpha \mathbf{D}$ \Comment{Update variational DOFs}
+                  \Else
+                     \State $\mathbf{a}\gets  \mathbf{a}$ \Comment{Remain the same}
+                 \EndIf
+			\EndIf
+		\Until{StopCG} 
+		\If{$\text{Det} < \text{D}_{\text{tar}}$ \textbf{or} $i_{\text{Outer}} > N_{\text{Outer}}^{\text{Max}}$}
+			\State StopOuter $\gets$ True
+		\EndIf
+		\If{$i_{\text{Outer}}>1$} 
+			\State $c_{P} \gets c_P \cdot r$ \Comment{Reduce $c_P$ by factor $r \in (0,1)$}
+		\EndIf
+	\Until{StopOuter}
+	\State $\mathbf{return}$ $\mathbf{T} \gets \mathbf{T}_0 \mathbf{A} $ \Comment{Return NLMOs coefficients}
+	%\EndProcedure
+   \end{algorithmic}
+\end{algorithm}
+\caption{\label{fig:cg} Trust region algorithm for the optimization of NLMOs.}
+\end{figure}
 
 
 \section{Results and discussion}
 
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{occupied_iter.pdf}
+\caption{Total steps of each $\alpha$ iteration for occupied carborane, borophene, decacyclene and graphene systems}
+\label{fig:boro}
+\end{figure*}
+
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{occupied_grad.pdf}
+\caption{Performance of search direction schemes in the occupied Berghold localization of the MOs}
+\label{fig:boro}
+\end{figure*}
+
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{occupied_walltime.pdf}
+\caption{Walltime comparison of the most time consuming $\alpha$ iteration in the occupied Berghold localization}
+\label{fig:boro}
+\end{figure*}
+
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{virtual_iter.pdf}
+\caption{Total steps of each $\alpha$ iteration for virtual carborane, borophene, decacyclene and graphene systems}
+\label{fig:boro}
+\end{figure*}
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{virtual_grad.pdf}
+\caption{Performance of search direction schemes in the virtual Berghold localization of the MOs}
+\label{fig:boro}
+\end{figure*}
+
+
+\begin{figure*}[htb]
+\centering
+\includegraphics[width=\textwidth]{virtual_walltime.pdf}
+\caption{Walltime comparison of the most time consuming $\alpha$ iteration in the virtual Berghold localization}
+\label{fig:boro}
+\end{figure*}
+
+
 \section{Conclusions}
+
+Questions:
+1. Should we include newton method and Trust-region Dogleg?
+2. Print out virtual orbitals
+3. intel compiler and gfortran compiler, gfortran seems to work more efficient than intel in molecular systems?
 
 
 \section{Acknowledgments} 
