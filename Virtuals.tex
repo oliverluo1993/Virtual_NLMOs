@@ -199,7 +199,78 @@ is the (positive) expected relative reduction in the localization function, and
 is the logarithm of the ratio of the initial and final determinants.
 By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1} 10$ should be an appropriated estimation for the optimization of canonical orbitals to the NLMOs with determinant $ \text{D}_{\text{tar}} \approx 0.1$.
 
-\subsection{Line Search Methods}
+The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$  required in Eq.~(\ref{eq:descent_dir}) is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
+%
+\begin{equation} \label{eq:grad}
+\begin{split}
+G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
+\end{split}
+\end{equation}
+%
+
+%
+\begin{equation} \label{eq:grad-convert}
+\begin{split}
+{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - ( \sigma_{in}^0 {A^n}_j ) ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j 
+\end{split}
+\end{equation}
+%
+\begin{equation} \label{eq:grad-loc}
+\begin{split}
+\tilde{L}{_k}^l & = - \sum_K {4 \omega_K} \times \\ 
+%%%: this was for the log function \tilde{L}{_k}^l & = - \sum_K \frac{4 \omega_K}{\vert z_{l}^{K} \vert^2} \times \\ 
+&\times \left[  \operatorname{Re}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Re}(z_{l}^{K}) + \operatorname{Im}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Im}(z_{l}^{K}) \right]
+\end{split}
+\end{equation}
+%
+\begin{equation} \label{eq:grad-pen}
+\begin{split}
+\tilde{P}{_k}^l & = -2 \sigma_{km}^0 {A^m}_n \sigma^{nl}
+\end{split}
+\end{equation}
+%
+If the gradient in Eq.~(\ref{eq:grad-loc}) is computed for the Pipek-Mezey localization function, weights $\omega_K$ are equal to one and the imaginary part of $z_{i}^{K}$ is equal to zero.
+
+
+
+The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \partial{a^s}_t}$ is also expressed as the sum of the localization Eq.~(\ref{eq:hessian-loc}) and penalty Eq.~(\ref{eq:hessian-pen}) components
+
+
+%
+\begin{equation} \label{eq:hessian-convert}
+\begin{split}
+{Y_{is}}^{jt} &= \sum_{k,x} \tilde{Y}_{kx}^{jt} \frac{\partial {A^k}_j}{\partial {a^i}_j} \frac{\partial {A^x}_t}{\partial {a^s}_t} + \sum_{k} \tilde{X_k}^j \frac{\partial {A^k}_l}{\partial {a^i}_j \partial{a^s}_t}  \\
+&= \left[ \tilde{Y}{_{js}}^{jt} - \sum_{x}\left(\tilde{Y}{_{ix}}^{jt} {A^x}_t \right)\left(\sigma^0 A\right)_{st} - \right.\\
+&\left. - \sum_{k}\left(\tilde{Y}{_{ks}}^{jt} {A^k}_j\right)\left(\sigma^0 A\right)_{ij} + \right.\\
+&\left. + \sum_{k,x}\left({A^k}_j \tilde{Y}{_{kx}}^{jt} {A^x}_t\right)\left(\sigma^0 A\right)_{ij}\left(\sigma^0 A\right)_{st} \right] \times N_j N_t + \\
+&+ \left[ -\tilde{X_i}^t \left(\sigma^0 A \right)_{st} - \tilde{X_s}^t \left(\sigma^0 A \right)_{it} - \sum_{k} \left( \tilde{X_k}^t {A^k}_t \right)\sigma^0_{is}  + \right.\\
+&\left. + 3 \sum_{k} \left(\tilde{X_k}^t {A^k}_t \right) \left(\sigma^0 A\right)_{it} \left(\sigma^0 A\right)_{st} \right] \times N_{t}^2
+\end{split}
+\end{equation}
+%
+
+
+%
+\begin{equation} \label{eq:hessian-loc}
+\begin{split}
+\tilde{M}{_{is}}^{jt} &= - \sum_K {4 \omega_K} \times \\ 
+&\times \left[  \operatorname{Re}(B^{K}_{is}) \operatorname{Re}(z_{t}^{K}) + 2 \operatorname{Re}(B^{K}_{in}){A^{n}}_{t} \operatorname{Re}(B^{K}_{sq}){A^{q}}_{t} +  \right. \\
+&\left. + \operatorname{Im}(B^{K}_{is}) \operatorname{Im}(z_{t}^{K}) + 2 \operatorname{Im}(B^{K}_{in}){A^{n}}_{t} \operatorname{Im}(B^{K}_{sq}){A^{q}}_{t}  \right] \times \delta_{jt}
+\end{split}
+\end{equation}
+%
+
+%
+\begin{equation} \label{eq:hessian-pen}
+\begin{split}
+\tilde{Q}{_{is}}^{jt} = 2\left(\sigma_{im}^0 {A^m}_n \sigma^{nt}\right)\left(\sigma_{sp}^0 {A^p}_q \sigma^{qj}\right)
+\end{split}
+\end{equation}
+%
+
+
+
+\subsection{Multidimensional line Search Methods}
 
 \begin{figure}
 \begin{algorithm}[H]
@@ -247,7 +318,7 @@ By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1}
 			
 			\If{\textbf{not} Stop}
 				\State $D \gets $ \text{Key difference between line search methods} \Comment{Search direction}
-				\State $\alpha \gets \text{argmin}_{\alpha} \Omega(\mathbf{a} + \alpha \mathbf{D})$ \Comment{Line search}
+				\State $\alpha \gets \text{argmin}_{\alpha} \Omega(\mathbf{a} + \alpha \mathbf{D})$ \Comment{1D Line search}
 				\State $\mathbf{a}\gets \mathbf{a} + \alpha \mathbf{D}$ \Comment{Update variational DOFs}
 			\EndIf
 		\Until{Stop} 
@@ -264,7 +335,7 @@ By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1}
 \end{algorithm}
 \caption{\label{fig:cg} Line search algorithm for the optimization of NLMOs.}
 \end{figure}
-Line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
+Multidimensional line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
 %
 \begin{equation} \label{eq:LS_methods}
 \begin{split} 
@@ -292,37 +363,7 @@ where  $\beta_0=0$, and for $k \geq 1$
 CGFR and CGDY correspond to the Fletcher-Reeves~\citep{fletcher1964function}  and Dai-Yuan~\cite{dai1999nonlinear} choices for the conjugate gradient update factor
 
 
-The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$  required in Eq.~(\ref{eq:descent_dir}) is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
-%
-\begin{equation} \label{eq:grad}
-\begin{split}
-G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
-\end{split}
-\end{equation}
-%
 
-%
-\begin{equation} \label{eq:grad-convert}
-\begin{split}
-{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - ( \sigma_{in}^0 {A^n}_j ) ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j 
-\end{split}
-\end{equation}
-%
-\begin{equation} \label{eq:grad-loc}
-\begin{split}
-\tilde{L}{_k}^l & = - \sum_K {4 \omega_K} \times \\ 
-%%%: this was for the log function \tilde{L}{_k}^l & = - \sum_K \frac{4 \omega_K}{\vert z_{l}^{K} \vert^2} \times \\ 
-&\times \left[  \operatorname{Re}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Re}(z_{l}^{K}) + \operatorname{Im}(B^{K}_{kn}) {A^{n}}_{l} \operatorname{Im}(z_{l}^{K}) \right]
-\end{split}
-\end{equation}
-%
-\begin{equation} \label{eq:grad-pen}
-\begin{split}
-\tilde{P}{_k}^l & = -2 \sigma_{km}^0 {A^m}_n \sigma^{nl} 
-\end{split}
-\end{equation}
-%
-If the gradient in Eq.~(\ref{eq:grad-loc}) is computed for the Pipek-Mezey localization function, weights $\omega_K$ are equal to one and the imaginary part of $z_{i}^{K}$ is equal to zero.
 
 In Newton and \emph{quasi}-Newton  methods, the search direction $D_{k}$ is given by the solution of the analogue of the Newton equation:
 %
@@ -372,6 +413,8 @@ where $\beta_{k}^\text{LSCD}$ is defined as
    \begin{algorithmic}[1]
    	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
 	\State Input $\epsilon_{\text{TR}}$ \Comment{Localization convergence threshold}
+	\State Input $\hat{\Delta}$ \Comment{The overall bound on the step lengths}
+	\State Input $\Delta_{0}$ \Comment{Initial trust-region radius}
 	%\State Input $N_{\text{CG}}$, $N_{\text{Outer}}$ \Comment{Max CG, outer iterations}
 	\State Input $\text{D}_{\text{tar}}$ \Comment{Minimum allowed NLMO determinant}
    	\State Input $\mathbf{T}_0$ \Comment{Initial basis set coefficients for $\ket{i_0}$}
@@ -473,17 +516,53 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 	%\EndProcedure
    \end{algorithmic}
 \end{algorithm}
-\caption{\label{fig:cg} Trust region algorithm for the optimization of NLMOs.}
+\caption{\label{fig:tr} Trust region algorithm for the optimization of NLMOs.}
 \end{figure}
+The trust region methods adopt a different approach to update the step direction and the step size, in which it only takes steps within a trust region around the current iteration. The trust region subproblem  is defined as a second order Taylor series:
+%
+\begin{equation} \label{eq:tr_subproblem}
+\begin{split}
+\min m_{k}(D) = f_{k} + G_{k}^T D + \frac{1}{2}D^T B_{k}D    \quad s.t. \lvert D \rvert \leq \Delta_{k}
+\end{split}
+\end{equation}
+%
+
+
 
 
 \section{Results and discussion}
+\begin{table*}[htbp]
+\caption{The relative reduction in the localization function and the final determinant of the occupied and virtual NLMO overlap.}
+\label{tab:loc}
+\centering
+\begin{tabular}{l c c c c}
+\hline\hline
+Molecules & $\Delta_{\text{NLMOs/OLMOs}}^{\text{occ}}$ & $\det(\sigma)^{\text{occ}} $ & $\Delta_{\text{NLMOs/OLMOs}}^{\text{vir}}$ & $\det(\sigma)^{\text{vir}}$ \\
+\hline
+H$_2$O & 18 & 0.100 & 33 & 0.016 \\ 
+CO$_2$ & 30 & 0.025 & 32 & 0.002\\
+Borazine (B$_3$N$_3$H$_6$) & 20 & 0.026 & 20 & 0.006 \\
+Carborane (C$_2$B$_{10}$H$_{12}$) & 17 & 0.085 & 18 & 0.001 \\ 
+1-Butyne (C$_4$H$_6$) & 19 & 0.063 & 25 & 0.001 \\
+Benzene (C$_6$H$_6$) & 28 & 0.041 & 19 & 0.006 \\ 
+Heptane (C$_7$H$_{16}$) & 12 & 0.122 & & \\ 
+Icosane (C$_{20}$H$_{42}$) & 11 & 0.053 & & \\ 
+C60 & 14 & 0.130 & 6.2 & 0.006 \\
+Graphene & 21 & 0.025 & 10 & 0.0001 \\
+\hline
+Average & 19 & 0.067 & & \\
+\hline
+\hline
+\end{tabular}
+\label{table:nonlin}
+\end{table*}
+
 
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{occupied_iter.pdf}
 \caption{Total steps of each $\alpha$ iteration for occupied carborane, borophene, decacyclene and graphene systems}
-\label{fig:boro}
+\label{fig:occ_iter}
 \end{figure*}
 
 
@@ -491,7 +570,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \centering
 \includegraphics[width=\textwidth]{occupied_grad.pdf}
 \caption{Performance of search direction schemes in the occupied Berghold localization of the MOs}
-\label{fig:boro}
+\label{fig:occ_grad}
 \end{figure*}
 
 
@@ -499,7 +578,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \centering
 \includegraphics[width=\textwidth]{occupied_walltime.pdf}
 \caption{Walltime comparison of the most time consuming $\alpha$ iteration in the occupied Berghold localization}
-\label{fig:boro}
+\label{fig:occ_walltime}
 \end{figure*}
 
 
@@ -507,14 +586,14 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \centering
 \includegraphics[width=\textwidth]{virtual_iter.pdf}
 \caption{Total steps of each $\alpha$ iteration for virtual carborane, borophene, decacyclene and graphene systems}
-\label{fig:boro}
+\label{fig:vir_iter}
 \end{figure*}
 
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{virtual_grad.pdf}
 \caption{Performance of search direction schemes in the virtual Berghold localization of the MOs}
-\label{fig:boro}
+\label{fig:vir_grad}
 \end{figure*}
 
 
@@ -522,7 +601,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
 \centering
 \includegraphics[width=\textwidth]{virtual_walltime.pdf}
 \caption{Walltime comparison of the most time consuming $\alpha$ iteration in the virtual Berghold localization}
-\label{fig:boro}
+\label{fig:vir_walltime}
 \end{figure*}
 
 
