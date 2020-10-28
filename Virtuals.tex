@@ -80,7 +80,7 @@ In the last decade, these well-established localization functions have been modi
 
 For periodic systems, maximally localized Wannier functions (MLWFs)~\cite{marzari2012maximally,marzari1997maximally} represent the solid-state equivalent of Boys-Foster orbitals. 
 %RZK: marzari1997maximally: Marzari, N., and D. Vanderbilt, 1997, Phys. Rev. B 56, 12 847.
-For large supercells of condensed phase periodic systems, where electronic structure can be described with the $\Gamma$-point sampling of the Brillouin zone, generalized Pipek–Mezey Wannier functions have also been proposed~\cite{jonsson2017theory}. 
+For large supercells of condensed phase periodic systems, where electronic structure can be described with the $\Gamma$-point sampling of the Brillouin zone, generalized Pipek-Mezey Wannier functions have also been proposed~\cite{jonsson2017theory}. 
 In this work, Wannier functions and localized molecular orbitals will be referred to as LMOs regardless of whether the system is isolated or treated with periodic boundary conditions.
  
 Since CMOs are orthogonal and a unitary transformation applied to them during a localization procedure preserves the orbital metric, LMOs obtained in this way are orthogonal by construction.
@@ -147,7 +147,7 @@ In this work, we designed, tested and compared a variety of line search and trus
 \subsection{Theory and Implementation}
 In this work, the conventional tensor notation is used to work with the nonorthogonal orbitals~\cite{head1998tensor}: covariant quantities are denoted with subscripts, contravariant quantities with superscripts and summation is implied over the same covariant and contravariant orbital indices. Summation is not implied if two indices are both covariant. 
 
-In order to obtain a set of nonorthogonal localized molecular orbitals, the conventional localization function $\Omega_L$ has been suggested to eliminates unphysical states with linearly dependent orbitals by introducing a penalty function  $\Omega_P$.~\cite{luo2020direct} 
+In order to obtain a set of nonorthogonal localized molecular orbitals, the conventional localization function $\Omega_L$ is augmented by a penalty function  $\Omega_P$ that prevents orbitals from becoming linearly dependent during the optimization~\cite{luo2020direct}.
 %
 \begin{equation} \label{eq:fun-overall}
 \begin{split}
@@ -155,7 +155,7 @@ In order to obtain a set of nonorthogonal localized molecular orbitals, the conv
 \end{split}
 \end{equation}
 %
-where $c_P > 0$ is the penalty strength.
+where $c_P > 0$ is the penalty strength. 
 The NLMOs $\ket{i}$ are expressed as a linear combination of one-electron states $\ket{j_0}$
 
 %
@@ -202,15 +202,28 @@ The penalty function is defined as in Eq.~(\ref{eq:fun-pen}) since the determina
 \end{split}
 \end{equation}
 %
-The penalty strength $c_P$ plays an important role during the optimization procedure, so the initial value of  $c_P$ should be wisely chosen  to balance  approximately the localization and penalty components of $\Omega$, which has been proposed to achieve the reduction in $\Omega_L$ upon the minimization of $\Omega$ has the same order of magnitude as the change in the penalty  $c_P\Omega_P$.
+RZK: variational parameters $a$-lowercase were never introduced.
+
+The penalty strength $c_P$ is written $c_P$ as a product of a dimensionless parameter $\alpha$ and the initial value of the localization function
 %
 \begin{equation} \label{eq:cp-beta}
 \begin{split} 
-%\Omega_L(\mathbf{I}) + c_P \Omega_P(\mathbf{I}) & \sim \Omega_{L}(\mathbf{A}^{\ast}) - c_P \ln \text{D}_{\text{tar}} \\
-c_P^{\text{init}} & \sim \frac{ \Omega_{L}(\mathbf{I}) - \Omega_{L}(\mathbf{A}^{\ast}) }{ \Omega_{P}(\mathbf{A}^{\ast}) - \Omega_{P}(\mathbf{I}) } = \frac{ \beta_L^{\ast} }{ \beta_P^{\ast} } \times \Omega_{L}(\mathbf{I}) \equiv \alpha \times \Omega_L(\mathbf{I})
+c_P = \alpha \times \Omega_L(\mathbf{I})
 \end{split}
 \end{equation}
 %
+This factorization makes units of the localization and penalty terms consistent. The value of $\alpha$ is initially chosen to favor orthogonal orbitals and then gradually reduced to improve locality while still maintaining linear independence of NLMOs. 
+It has been found~\cite{luo2020direct} that the initial value of  which has been proposed to achieve the reduction in $\Omega_L$ upon the minimization of $\Omega$ has the same order of magnitude as the change in the penalty  $c_P\Omega_P$.
+
+%
+\begin{equation} \label{eq:cp-beta}
+\begin{split} 
+c_P^{\text{init}} = \alpha \times \Omega_L(\mathbf{I})
+\end{split}
+\end{equation}
+%
+
+
 where $\mathbf{A}^{\ast}$ denotes the (yet unknown) solution to the minimization problem, 
 %
 \begin{equation} 
@@ -295,6 +308,7 @@ By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1}
 \end{algorithm}
 \caption{\label{fig:cg} Line search algorithm for the optimization of NLMOs.}
 \end{figure}
+
 Line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
 %
 \begin{equation} \label{eq:LS_methods}
@@ -303,11 +317,13 @@ a_{k+1} = a_{k} + \alpha_{k}D_{k}
 \end{split}
 \end{equation}
 %
+where RZK: define your variables, $\alpha$ is a bad choice for the step size because $\alpha$ is already used in the penalty strength.
+
 The descent direction has been suggested by various methods. In this work, we will implement and compare the NLMO optimization between gradient descent, conjugate gradient~(CG),  \emph{quasi}-Newton methods such as limited-memory Broyden–Fletcher–Goldfarb–Shanno~(BFGS) ,and hybrid CG-BFGS. The general descent direction of gradient methods takes the following form:
 %
 \begin{equation} \label{eq:descent_dir}
 \begin{split}
-D_{k+1} = -G_{k+1} + \beta_k D{k}
+D_{k+1} = -G_{k+1} + \beta_k D_{k}
 \end{split}
 \end{equation}
 %
