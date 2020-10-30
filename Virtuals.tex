@@ -227,7 +227,7 @@ z_{i}^{K} & =  {A^m}_i \bra{m_0} \op{B}^K \ket{n_0} {A^n}_i = {A^m}_i B^{K}_{mn}
 %
 with index $i$ referring to NLMOs and other variables having different meaning depending on the localization method. 
 
-The Berghold~\cite{resta1998quantum, resta1999electron, berghold2000general} localization function $\Omega_L^{\text{B}}$ is equivalent to the Boys-Foster localization scheme~\cite{berghold2000general, resta1999electron} for gas-phase system and describes electronic states within the  $\Gamma$-point approximation for periodic system:
+The Berghold~\cite{berghold2000general} localization function $\Omega_L^{\text{B}}$ is equivalent to the Boys-Foster localization scheme~\cite{berghold2000general, resta1999electron} for gas-phase system. For periodic systems, the Berghold function is a generalization of the Resta function~\cite{resta1998quantum, resta1999electron} to three dimensions and simulation cells of general shape and symmetry. It is suitable for the $\Gamma$-point-only description of electronic states.
 %
 \begin{equation} \label{eq:berghold}
 \begin{split}
@@ -250,24 +250,26 @@ In the Pipek-Mezey~\cite{pipek1989fast,lehtola2014pipek} localization function $
 %
 $z_{i}^{K}$ is the contribution of orbital $i$ to the Mulliken charge of atom $K$, $\ket{\chi_\mu}$ and $\ket{\chi^\mu}$ are atom-centered covariant and contravariant basis set functions, atomic weights $\omega_K$ are all set to one and the imaginary part of $z_{i}^{K}$ is zero~\cite{silvestrelli1999maximally, berghold2000general}. The summation over $\mu$ is written explicitly to emphasize that it is restricted to the basis functions centered on atom $K$. 
 
-Efficient optimization of the loss function, requires its gradients and (desirably) second derivatives with respect to the independent parameters $\mathbf{a}$. These can be conveniently written in terms of the gradients and second derivatives with respect to mixing coefficients $\mathbf{A}$.
+The unconstrained minimization of function $\Omega$ can be carried out with a variety of algorithms, all of which require the first derivative with respect to the independent parameters (i.e. the gradient) and some of which can benefit from exact or approximate second derivatives (i.e. the Hessian). %These first and second derivatives can be conveniently written in terms of the first and second derivatives with respect to mixing coefficients $\mathbf{A}$.
 
-RZK: all terms must be defined properly. The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$ is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
+The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$ is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
 %
 \begin{equation} \label{eq:grad}
 \begin{split}
-G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
+{G_i}^{j} = {L_i}^{j} + c_P {P_i}^{j}
 \end{split}
 \end{equation}
 %
-
+These components can be readily expressed in terms of the derivatives with respect to the transformation coefficients $\tilde{X}{_k}^l \equiv \frac{\partial \Omega_X}{\partial {A^k}_l}$
 %
 \begin{equation} \label{eq:grad-convert}
 \begin{split}
-{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - ( \sigma_{in}^0 {A^n}_j ) ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j 
+{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - A_{ij} ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j
 \end{split}
 \end{equation}
 %
+where $X$ is either $L$ or $P$ and covariant coefficients arise from their contravariant-covariant counterparts $A_{ij} = \sigma_{in}^0 {A^n}_j$. To clarify the tensor notation, the summation is not implied over $j$ in the equation above because this index appears in the left-hand side of the equation. The same convention is used in equations below.
+
 \begin{equation} \label{eq:grad-loc}
 \begin{split}
 \tilde{L}{_k}^l & = - \sum_K {4 \omega_K} \times \\ 
@@ -278,43 +280,45 @@ G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
 %
 \begin{equation} \label{eq:grad-pen}
 \begin{split}
-\tilde{P}{_k}^l & = -2 \sigma_{km}^0 {A^m}_n \sigma^{nl}
+\tilde{P}{_k}^l & = -2  \sigma_{km}^0 A{^{m}}_{n} \sigma^{nl} = -2 A{_k}^{l}
 \end{split}
 \end{equation}
 %
-Note that the penalty term ensures that that the overlap matrix remains not only invertible but also well-conditioned. Thus, its inverse $\sigma^{nl}$ can be computed efficiently. 
+The equation above defines covariant-contravariant coefficients $A{_k}^{l}$. Note that the penalty term ensures that that the overlap matrix remains not only invertible but also well-conditioned. Thus, its inverse, $\sigma^{nl}$, can be computed efficiently. 
 
-The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \partial{a^s}_t}$ is also expressed as the sum of the localization Eq.~(\ref{eq:hessian-loc}) and penalty Eq.~(\ref{eq:hessian-pen}) components
-
-
+The Hessian ${H_{is}}^{jt} \equiv \frac{\partial^2 \Omega}{\partial {a^i}_j \partial{a^s}_t}$ is also a sum of the localization $\bar{L}{_{is}}^{jt} \equiv \frac{\partial^2 \Omega_L}{\partial {a^i}_j \partial{a^s}_t}$ and penalty $\bar{P}{_{is}}^{jt} \equiv \frac{\partial^2 \Omega_P}{\partial {a^i}_j \partial{a^s}_t}$ components
+%
+\begin{equation} \label{eq:hessian}
+\begin{split}
+H{_{is}}^{jt} = \bar{L}{_{is}}^{jt} + c_P\, \bar{P}{_{is}}^{jt}
+\end{split}
+\end{equation}
+%
+These components can be expressed in terms of the second derivatives with respect to the transformation coefficients $\tilde{\bar{X}}{_{kx}}^{ly} \equiv \frac{\partial^2 \Omega_X}{\partial {A^k}_l \partial {A^x}_y}$ and also in terms of the first derivative $\tilde{X}{_k}^l$ defined above. Here, $X$ stands for either $L$ or $P$. %Using the fact that \frac{\partial {A^k}_j}{\partial {a^i}_j} 
 %
 \begin{equation} \label{eq:hessian-convert}
 \begin{split}
-{Y_{is}}^{jt} &= \sum_{k,x} \tilde{Y}_{kx}^{jt} \frac{\partial {A^k}_j}{\partial {a^i}_j} \frac{\partial {A^x}_t}{\partial {a^s}_t} + \sum_{k} \tilde{X_k}^j \frac{\partial {A^k}_l}{\partial {a^i}_j \partial{a^s}_t}  \\
-&= \left[ \tilde{Y}{_{js}}^{jt} - \sum_{x}\left(\tilde{Y}{_{ix}}^{jt} {A^x}_t \right)\left(\sigma^0 A\right)_{st} - \right.\\
-&\left. - \sum_{k}\left(\tilde{Y}{_{ks}}^{jt} {A^k}_j\right)\left(\sigma^0 A\right)_{ij} + \right.\\
-&\left. + \sum_{k,x}\left({A^k}_j \tilde{Y}{_{kx}}^{jt} {A^x}_t\right)\left(\sigma^0 A\right)_{ij}\left(\sigma^0 A\right)_{st} \right] \times N_j N_t + \\
-&+ \left[ -\tilde{X_i}^t \left(\sigma^0 A \right)_{st} - \tilde{X_s}^t \left(\sigma^0 A \right)_{it} - \sum_{k} \left( \tilde{X_k}^t {A^k}_t \right)\sigma^0_{is}  + \right.\\
-&\left. + 3 \sum_{k} \left(\tilde{X_k}^t {A^k}_t \right) \left(\sigma^0 A\right)_{it} \left(\sigma^0 A\right)_{st} \right] \times N_{t}^2
+\bar{X}{_{is}}^{jt} &= \tilde{\bar{X}}{_{kx}}^{ly} \frac{\partial {A^k}_l}{\partial {a^i}_j} \frac{\partial {A^x}_y}{\partial {a^s}_t} + \tilde{X}{_k}^l \frac{\partial^2 {A^k}_l}{\partial {a^i}_j \partial{a^s}_t} = \\
+&= \left[ \tilde{\bar{X}}{_{is}}^{jt} - \left(\tilde{\bar{X}}{_{ix}}^{jt} {A^x}_t \right) A_{st} - \left({A^k}_j \tilde{\bar{X}}{_{ks}}^{jt} \right) A_{ij} + \right.\\
+&\left. + \left({A^k}_j \tilde{\bar{X}}{_{kx}}^{jt} {A^x}_t\right) A_{ij} A_{st} \right] N_j N_t + \\
+&+ \delta_{jt} \left[ \left(\tilde{X}{_k}^t {A^k}_t \right) \left( 3 A_{it} A_{st} - \sigma^0_{is} \right) - \right.\\
+&\left.  -\tilde{X}{_i}^t A_{st} - \tilde{X}{_s}^t A_{it} \right] N_{t}^2
 \end{split}
 \end{equation}
 %
-
-
 %
 \begin{equation} \label{eq:hessian-loc}
 \begin{split}
-\tilde{M}{_{is}}^{jt} &= - \sum_K {4 \omega_K} \times \\ 
-&\times \left[  \operatorname{Re}(B^{K}_{is}) \operatorname{Re}(z_{t}^{K}) + 2 \operatorname{Re}(B^{K}_{in}){A^{n}}_{t} \operatorname{Re}(B^{K}_{sq}){A^{q}}_{t} +  \right. \\
-&\left. + \operatorname{Im}(B^{K}_{is}) \operatorname{Im}(z_{t}^{K}) + 2 \operatorname{Im}(B^{K}_{in}){A^{n}}_{t} \operatorname{Im}(B^{K}_{sq}){A^{q}}_{t}  \right] \times \delta_{jt}
+\tilde{\bar{L}}{_{kx}}^{jt} &= - \sum_K {4 \omega_K}  \delta_{jt} \times \\ 
+&\times \left[  \operatorname{Re}(B^{K}_{kx}) \operatorname{Re}(z_{t}^{K}) + 2 \operatorname{Re}(B^{K}_{kn}){A^{n}}_{t} \operatorname{Re}(B^{K}_{xq}){A^{q}}_{t} +  \right. \\
+&\left. + \operatorname{Im}(B^{K}_{kx}) \operatorname{Im}(z_{t}^{K}) + 2 \operatorname{Im}(B^{K}_{kn}){A^{n}}_{t} \operatorname{Im}(B^{K}_{xq}){A^{q}}_{t}  \right]
 \end{split}
 \end{equation}
 %
-
 %
 \begin{equation} \label{eq:hessian-pen}
 \begin{split}
-\tilde{Q}{_{is}}^{jt} = 2\left(\sigma_{im}^0 {A^m}_n \sigma^{nt}\right)\left(\sigma_{sp}^0 {A^p}_q \sigma^{qj}\right)
+\tilde{\bar{P}}{_{kx}}^{jt} = 2 {A_k}^t {A_x}^j
 \end{split}
 \end{equation}
 %
