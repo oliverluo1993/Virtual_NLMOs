@@ -267,15 +267,10 @@ The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \parti
 \end{split}
 \end{equation}
 %
-
-
-
-\subsection{Multidimensional line Search Methods}
-
 \begin{figure}
 \begin{algorithm}[H]
-  \caption{Line search minimization of $\Omega$}
-  \label{alg:cg}
+  \caption{Localization of $\Omega$}
+  \label{alg:loc_algor}
    \begin{algorithmic}[1]
    	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
 	\State Input $\epsilon$ \Comment{Localization convergence threshold}
@@ -317,9 +312,7 @@ The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \parti
 			\EndIf
 			
 			\If{\textbf{not} Stop}
-				\State $D \gets $ \text{Key difference between line search methods} \Comment{Search direction}
-				\State $\alpha \gets \text{argmin}_{\alpha} \Omega(\mathbf{a} + \alpha \mathbf{D})$ \Comment{1D Line search}
-				\State $\mathbf{a}\gets \mathbf{a} + \alpha \mathbf{D}$ \Comment{Update variational DOFs}
+			    \State $\mathbf{a} \gets \text{Algorithm~(\ref{alg:ls}) or~(\ref{alg:tr})}$ \Comment{Update variational DOFs}
 			\EndIf
 		\Until{Stop} 
 		\If{$\text{Det} < \text{D}_{\text{tar}}$ \textbf{or} $i_{\text{Outer}} > N_{\text{Outer}}^{\text{Max}}$}
@@ -333,7 +326,25 @@ The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \parti
 	%\EndProcedure
    \end{algorithmic}
 \end{algorithm}
-\caption{\label{fig:cg} Line search algorithm for the optimization of NLMOs.}
+\caption{\label{fig:loc_algor} Localization  algorithm for NLMOs.}
+\end{figure}
+
+
+\subsection{Multidimensional line Search Methods}
+
+\begin{figure}
+\begin{algorithm}[H]
+  \caption{Line search minimization of $\Omega$}
+  \label{alg:ls}
+   \begin{algorithmic}[1]
+   	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
+	\State $D \gets  \text{Eq~(\ref{eq:descent_dir}) or~(\ref{eq:newton_dir})}$\Comment{Search direction}
+	\State $\alpha \gets \text{argmin}_{\alpha} \Omega(\mathbf{a} + \alpha \mathbf{D})$ \Comment{1D Line search}
+	\State $\mathbf{a}\gets \mathbf{a} + \alpha \mathbf{D}$ \Comment{Update variational DOFs}
+	%\EndProcedure
+   \end{algorithmic}
+\end{algorithm}
+\caption{\label{fig:ls} Line search algorithm for the optimization of NLMOs.}
 \end{figure}
 Multidimensional line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
 %
@@ -412,68 +423,25 @@ where $\beta_{k}^\text{LSCD}$ is defined as
   \label{alg:tr}
    \begin{algorithmic}[1]
    	%\Procedure{Minimize$\Omega$}{$c_P, \tau, \mathbf{T}_0$}
-	\State Input $\epsilon_{\text{TR}}$ \Comment{Localization convergence threshold}
+   	\State More Initial input: 
 	\State Input $\hat{\Delta}$ \Comment{The overall bound on the step lengths}
-	\State Input $\Delta_{0}$ \Comment{Initial trust-region radius}
-	%\State Input $N_{\text{CG}}$, $N_{\text{Outer}}$ \Comment{Max CG, outer iterations}
-	\State Input $\text{D}_{\text{tar}}$ \Comment{Minimum allowed NLMO determinant}
-   	\State Input $\mathbf{T}_0$ \Comment{Initial basis set coefficients for $\ket{i_0}$}
-   	\State Input $\mathbf{S}$ \Comment{Basis set overlap}
-   	\State Input $\mathbf{L}^K$ \Comment{Basis set representation of the localization operator} 
-   	\State $\mathbf{\sigma}_0 \gets \mathbf{T}_0^{\dagger} \mathbf{ST}_0$ \Comment{Initial orbital overlap} 
-   	\State $\mathbf{B}^{K} \gets \mathbf{T}_0^{\dagger} \mathbf{L}^K \mathbf{T}_0$ \Comment{Initial localization matrix, Eq.~(\ref{eq:fun-loc})} 
-	\State $\mathbf{a} \gets \mathbf{I}$ \Comment{Initial guess on variational parameters}
-	%\State Converged $\gets$ False
-	\State StopOuter $\gets$ False \Comment{Flag to exit the outer loop}
-	\State $i_{\text{Outer}} \gets 0$ \Comment{Iteration counter}
-	\Repeat \Comment{Loop to change the penalty strength}
-		\State $i_{\text{Outer}} \gets i_{\text{Outer}} + 1$ 
-		\State StopTR $\gets$ False \Comment{Flag to exit the TR loop}
-		\State $i_{\text{TR}} \gets 0$ \Comment{Iteration counter}
-%		\State $\beta \gets 0$ \Comment{Reset conjugation}
-		\Repeat \Comment{Fixed-penalty localization loop}
-			\State $i_{\text{TR}} \gets i_{\text{TR}} + 1$ 
-			\State $\mathbf{A} \gets \mathbf{a} \left[ \text{diagonal}(\mathbf{a}^{\dagger} \mathbf{\sigma}_0 \mathbf{a}) \right]^{-\frac{1}{2}}$ \Comment{Update NLMOs}
-			\State $\mathbf{\sigma} \gets \mathbf{A}^{\dagger}\mathbf{\sigma}_0 \mathbf{A}$ \Comment{Update overlap}
-			\State $\text{Det} \gets \text{determinant} (\mathbf{\sigma})$ \Comment{Determinant}
-			\State $\Omega_{P} \gets - \ln [\text{Det}] $ \Comment{Orthogonalization function}
-			\State $\mathbf{P} \gets \text{Eq~(\ref{eq:grad-pen}) and~(\ref{eq:grad-convert})}$ \Comment{Orthogonalization gradient}
-			\State $\Omega_{L} \gets \text{Eq~(\ref{eq:fun-loc})}$ \Comment{Localization function}
-			\State $\mathbf{L} \gets \text{Eq~(\ref{eq:grad-loc}) and~(\ref{eq:grad-convert})}$ \Comment{Localization gradient}
-			\If{$i_{\text{Outer}}=1$ \textbf{and} $i_{\text{TR}}=1$} 
-				%\State $c_{P} \gets \text{Tr}(\mathbf{L}^{\dagger} \mathbf{P})/\text{Tr}(\mathbf{P}^{\dagger}\mathbf{P})$
-				\State $c_{P} \gets \Omega_{L}(\ln [\text{Det} / \text{D}_{\text{tar}} ])^{-1}$ \Comment{Initial strength}
-			\EndIf
-			\State $\Omega \gets \Omega_{L} + c_P \Omega_{P} $ 
-			\If{$i_{\text{TR}}>1$}
-				\State $\mathbf{\Gamma} \gets \mathbf{G}$ \Comment{Save old gradient}
-			\EndIf 
-			\State $\mathbf{G} \gets \mathbf{L} + c_P \mathbf{P} $ 
-			%\State $\text{Error}_\text{CG} \gets \vert\vert \mathbf{G} \vert \vert_{\text{max}}$
-			\If{$\vert\vert \mathbf{G} \vert \vert_{\text{max}} < \epsilon_{\text{TR}}$}
-				\State StopTR $\gets$ True
-			\EndIf
-%			\If{$i_{\text{CG}}=1$ \textbf{And} $i_{\text{Outer}}=1$}
-%				\State StopCG $\gets$ False \Comment{Do first iteration}
-%			\EndIf
-			\If{\textbf{not} StopTR}
-%				\If{$i_{\text{CG}} = 1$}
-%					\State $\mathbf{P}^{R_c} \gets \text{Eq.\ref{eq:prec}}(\mathbf{F},\mathbf{M}^{R_c},\mathbf{K}^{R_c}) $\Comment{Precon.}
-%				\Else
-%					\State $\mathbf{O}_{R_c} \gets \mathbf{D}_{R_c}$ \Comment{Save old direction}
-%				\EndIf
+	\State Input $\eta$  \Comment{The quadratic model quality threshold}
+	\State Input $\Delta$ \Comment{Initial trust-region radius}
+	\State Back to$\text{Algorithm~(\ref{alg:loc_algor})}$:
+
                  \State BorderReached $\gets$ False \Comment{Flag to touch the inner border}
                  \State StopInner $\gets$ False \Comment{Flag to exit the TR Inner loop}
                  \Repeat \Comment{TR subproblem loop}
                     \State Curvature $\gets$  $\mathbf{G}^{T}\mathbf{H}\mathbf{G}$
                     \If{Curvature $<$ 0}
-                       \State $\tau$ \Comment{Step size to reach the TR border}
+                       \State $\alpha$ \Comment{Compute step size}
                        \State StopInner $\gets$ True
                        \State BorderReached $\gets$ True
                        \State  $m(0)-m(\mathbf{D})$ $\gets$  $\mathbf{G}^{T}\mathbf{D}+\frac{1}{2}\mathbf{D}^{T}\mathbf{H}\mathbf{D}$
                        \State \textbf{break}
                     \Else
                        \State $\mathbf{D}$ \Comment{Compute Step}
+                       \State $\alpha \gets \text{argmin}_{\alpha} m(\alpha \mathbf{D})$ \Comment{Compute step size}
                        \State  $m(0)-m(D)$ $\gets$  $\mathbf{G}^{T}\mathbf{D}+\frac{1}{2}\mathbf{D}^{T}\mathbf{H}\mathbf{D}$
                     \EndIf
                  \Until{StopInner} 
@@ -481,18 +449,7 @@ where $\beta_{k}^\text{LSCD}$ is defined as
                  \If{$\rho < \frac{1}{4}$}
                     \State $\Delta \gets \frac{1}{4}\Delta$
                  \Else
-                 \algstore{bkbreak}
-   \end{algorithmic}
-\end{algorithm}
-\end{figure}
-
-\begin{figure}
-\addtocounter{algorithm}{-1}
-\begin{algorithm}[H]
-\caption{Trust region minimization of $\Omega$}
-   \begin{algorithmic}[1]
-   \algrestore{bkbreak}
-                    \If{$\rho > \frac{3}{4}$ \textbf{and} BorderReached}
+                     \If{$\rho > \frac{3}{4}$ \textbf{and} BorderReached}
                        \State $\Delta \gets \min{(2\Delta, \hat{\Delta})}$
                      \Else
                         \State $\Delta \gets \Delta$ \Comment{Remain the same}
@@ -503,21 +460,11 @@ where $\beta_{k}^\text{LSCD}$ is defined as
                   \Else
                      \State $\mathbf{a}\gets  \mathbf{a}$ \Comment{Remain the same}
                  \EndIf
-			\EndIf
-		\Until{StopCG} 
-		\If{$\text{Det} < \text{D}_{\text{tar}}$ \textbf{or} $i_{\text{Outer}} > N_{\text{Outer}}^{\text{Max}}$}
-			\State StopOuter $\gets$ True
-		\EndIf
-		\If{$i_{\text{Outer}}>1$} 
-			\State $c_{P} \gets c_P \cdot r$ \Comment{Reduce $c_P$ by factor $r \in (0,1)$}
-		\EndIf
-	\Until{StopOuter}
-	\State $\mathbf{return}$ $\mathbf{T} \gets \mathbf{T}_0 \mathbf{A} $ \Comment{Return NLMOs coefficients}
-	%\EndProcedure
    \end{algorithmic}
 \end{algorithm}
 \caption{\label{fig:tr} Trust region algorithm for the optimization of NLMOs.}
 \end{figure}
+
 The trust region methods adopt a different approach to update the step direction and the step size, in which it only takes steps within a trust region around the current iteration. The trust region subproblem  is defined as a second order Taylor series:
 %
 \begin{equation} \label{eq:tr_subproblem}
@@ -530,7 +477,11 @@ The trust region methods adopt a different approach to update the step direction
 
 
 
+
 \section{Results and discussion}
+\subsection{Locality of virtual NLMOs}
+
+
 \begin{table*}[htbp]
 \caption{The relative reduction in the localization function and the final determinant of the occupied and virtual NLMO overlap.}
 \label{tab:loc}
@@ -556,7 +507,9 @@ Average & 20 & 0.069 & & \\
 \label{table:nonlin}
 \end{table*}
 
+\subsection{Virtual Berghold vs. Virtual Pipek-Mezay Orbitals}
 
+\subsection{Computational Efficiency}
 \begin{figure*}[htb]
 \centering
 \includegraphics[width=\textwidth]{occupied_iter.pdf}
@@ -605,11 +558,6 @@ Average & 20 & 0.069 & & \\
 
 
 \section{Conclusions}
-
-Questions:
-1. Should we include newton method and Trust-region Dogleg?
-2. Print out virtual orbitals
-3. intel compiler and gfortran compiler, gfortran seems to work more efficient than intel in molecular systems?
 
 
 \section{Acknowledgments} 
