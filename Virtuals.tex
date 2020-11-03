@@ -41,7 +41,7 @@
 \bibliographystyle{achemso}
 
 \title{
-Nonorthogonal  occupied and virtual orbitals
+[Efficient] variable-metric localization of occupied and virtual one-electron orbitals
 }
 
 \author{Ziling Luo}
@@ -53,56 +53,87 @@ Nonorthogonal  occupied and virtual orbitals
 \date{\today}
 
 \begin{abstract}
-
+Comparison of variable-metric localization algorithms for occupied and virtual orbitals based on Boys-Foster and Pipek-Mezey localization functions for gas-phase and periodic systems.
 \end{abstract}
 
 
 \maketitle
 
-\section{Introduction} 
+\section{Introduction}
+ 
 Spatially localized orbitals are widely used in electronic structure theory.
 Occupied localized orbitals help describe, visualize and classify chemical bonding between atoms thus facilitating our understanding of electronic-structure origins of observed properties of atomistic systems.~\cite{boys1960construction, edmiston1963localized, pipek1989fast, niessen1972density, weinhold2012natural}.
 Occupied and virtual localized orbitals are crucial ingredients in all local electronic structure methods including Kohn-Sham density functional theory (DFT)~\cite{goedecker1994efficient, bowler2012methods, zalesny2011linear, pulay1986orbital, saebo2001low, pisani2005local, hampel1996local, forner1997numerical} and wavefunction-based electron correlation methods~\cite{saebo1993local, schutz1999low, hetzer2000low, schutz2001low}.
 In these methods, it is the locality of one-electron orbitals that allows to dramatically reduce the computational cost of modeling of large systems.
 
-Spatially localized orbitals are known as localized molecular orbitals (LMOs) in the field of molecular quantum chemistry and maximally localized Wannier functions (MLWFs) in solid state physics and materials science~\cite{marzari2012maximally}.
-Here, they will be collectively referred to as LMOs whereas the eigenstates of the effective one-electron Hamiltonian will be called canonical molecular orbitals (CMOs) regardless of whether the system is isolated or treated with periodic boundary conditions.
+%Spatially localized orbitals are known as localized molecular orbitals (LMOs) in the field of molecular quantum chemistry and maximally localized Wannier functions (MLWFs) in solid state physics and materials science~\cite{marzari2012maximally}.
+%Here, they will be collectively referred to as LMOs whereas the eigenstates of the effective one-electron Hamiltonian will be called canonical molecular orbitals (CMOs) regardless of whether the system is isolated or treated with periodic boundary conditions.
 
-Traditionally, LMOs are constructed by finding the unitary transformation of occupied or virtual CMOs that minimizes the spread of individual orbitals.
-Multiple functions have been proposed to perform the orbital localization in molecular systems, such as Boys-Foster~\cite{boys1960construction}, Edmiston-Ruedenberg~\cite{bytautas2002electron, bytautas2003split, edmiston1963localized}, Pipek-Mezey~\cite{pipek1989fast}, and Von Niessen~\cite{niessen1972density}.
-The Boys-Foster~\cite{boys1960construction} and Pipek-Mezey~\cite{pipek1989fast} localization functions are considered as two most popular and widely implemented methods, which are based on completely different approach to measure the orbital spreads.
-The Boys-Foster scheme is determined by minimizing the the sum of orbital variance and known for simply physical interpretation and low computational complexity.
-The Pipek-Mezey localization function, which maximized the sum of the squared atomic charges~\cite{mulliken1955electronic, lowdin1950non, lehtola2014pipek} of individual orbitals, provides a better bonding pattern explanation for orthogonal LMOs~(OLMOs) due to it preserves the $\sigma$-$\pi$ orbital separation during the orbital localization.
-The recent study has surprisingly shown that a pair of $\sigma$ and $\pi$ bonds tend to generated mixed $\tau$ and $\tau'$ orbitals for nonorthogonal LMOs~(NLMOs).
-Both Boys-Foster and Pipek-Mezey schemes generate reasonable localized occupied orbitals, while recent study has suggested that Pipek-Mezey scheme may produce semilocal orbitals in the case of virtual orbitals~\cite{hoyvik2013pipek} due to the system and basis set dependence property of the localization function.
-More advanced Boys-Foster function have been proposed to further localize orbitals and reduce tails, especially for virtual orbitals.~\cite{jansik2011local, hoyvik2012orbital} 
-In the case of the $\Gamma$-point approximation of the Brillouin zone for electronic structure calculations with period boundary conditions, the MLWF, which is the condensed matter equivalent representation of LMOs, have been proposed to construct through several successful and efficient optimization schemes~\cite{marzari2012maximally, resta1998quantum, resta1999electron, silvestrelli1999maximally, berghold2000general, jonsson2017theory}.
+The self-consistent field procedure at the heart of Kohn-Sham DFT and most single-reference electronic structure theories yields spatially delocalized one-electron states. Typically, these states are the eigenstates of the effective one-electron Hamiltonian and are known as canonical molecular orbitals (CMOs) in the case of molecules and Bloch orbitals in the case of periodic systems. Here, they will be collectively referred to as CMOs. 
+Traditionally, spatially localized orbitals are constructed by finding the unitary transformation of CMOs that minimizes the spread of individual orbitals. 
+The unitary transformation can be applied to the set of occupied orbitals, generating a localized description of chemical bonding, or to the set of virtual orbitals, producing local anti-bonding orbitals. 
 
-Since the unitary transformation preserves the orbital metric, orthogonal LMOs~(OLMOs) are obtained through this approach due to the CMOs are orthogonal.
-Thus OLMOs tend to have orthogonalization tails, which exhibit as small non-zero values far away from the localization center.
-The tails not only reduce the orbital locality but also complicate the interpretation of chemically relevant electronic-structure information which reduce its transferability from one system to another.
-To mitigate the undesirable orthogonality effects, metric-preserving unitary transformation has been applied to nonorthogonal orbitals~\cite{hoyvik2017generalising}.
-More general variable-metric non-singular transformation ~\cite{anderson1968self, diner1968fully, magnasco1974localized, payne1977hartree, mehler1977self, feng2004An_efficient, cui2010efficient} has been proposed to further lifts the orthogonality constraint and increase the number of degrees of freedom available to localize molecular orbitals.
-The NLMOs have been proved to be more localized and have noticeable less tails than corresponding OLMOs.~\cite{feng2004An_efficient, liu2000nonorthogonal}.
+Multiple functions have been proposed to measure orbital locality in molecular systems. The most known are Boys-Foster~\cite{boys1960construction}, Edmiston-Ruedenberg~\cite{bytautas2002electron, bytautas2003split, edmiston1963localized}, Pipek-Mezey~\cite{pipek1989fast}, and Von Niessen~\cite{niessen1972density} functions. 
+The Boys-Foster localization~\cite{boys1960construction} is perhaps the most popular because of the simplicity of its physical interpretation, low computational complexity and ease of implementation. 
+The Pipek-Mezey localization~\cite{pipek1989fast}, which maximizes atomic charges~\cite{mulliken1955electronic, lowdin1950non, lehtola2014pipek} of each orbital, is also widely used because it does not mix LMOs representing $\sigma$ and $\pi$ bonds and thus gives a clear picture of bonding patterns. 
+In the last decade, these well-established localization functions have been modified to reduce orbital tails and produce more uniform localization across a set of orbitals~\cite{jansik2011local, hoyvik2012orbital, hoyvik2012trust, hoyvik2013pipek, lehtola2013unitary, lehtola2014pipek}, especially virtual LMOs~\cite{jansik2011local, hoyvik2012orbital}.
 
-Despite substantial efforts haven been made to construct NLMOs~\cite{feng2004An_efficient, liu2000nonorthogonal, peng2013effective, hoyvik2017generalising}, the existing methods either produce NLMOs which are still similar to OLMOs~\cite{sundberg1979variationally} or lead to the linear dependence between the orbitals~\cite{feng2004An_efficient}.
-To overcome the linear dependence problem, Yang and co-workers~\cite{feng2004An_efficient, cui2010efficient} have developed a localization method in which the centers of NLMOs are fixed during the minimization of the localization function. 
-A new approach has recently been proposed to perform direct unconstrained variable-metric localization of occupied orbitals that allows to obtain NLMOs without pre-determining the orbital centers.~\cite{luo2020direct} 
+For periodic systems, maximally localized Wannier functions (MLWFs)~\cite{marzari2012maximally,marzari1997maximally} represent the solid-state equivalent of Boys-Foster orbitals. 
+%RZK: marzari1997maximally: Marzari, N., and D. Vanderbilt, 1997, Phys. Rev. B 56, 12 847.
+For large supercells of condensed phase periodic systems, where electronic structure can be described with the $\Gamma$-point sampling of the Brillouin zone, generalized Pipek-Mezey Wannier functions have also been proposed~\cite{jonsson2017theory}. 
+In this work, Wannier functions and localized molecular orbitals will be referred to as LMOs regardless of whether the system is isolated or treated with periodic boundary conditions.
+ 
+Since CMOs are orthogonal and a unitary transformation applied to them during a localization procedure preserves the orbital metric, LMOs obtained in this way are orthogonal by construction.
+Because of the the imposed orthogonality condition, orthogonal LMOs (OLMOs) exhibit small non-zero values even far away from their localization centers. 
+These orthogonalization tails reduce orbital locality making orbital-based local correlation methods less computationally efficient. 
+They also complicate the interpretation of chemically relevant electronic-structure information and make its transferability from one system to another more difficult. 
+%A recent study has suggested that Pipek-Mezey scheme may produce semilocal orbitals in the case of virtual orbitals~\cite{hoyvik2013pipek} due to the system and basis set dependence property of the localization function. [RZK: There are lots of issues with PM orbitals or with virtual orbitals. Do we really want to single out this problem? We should mention this specific problem only if it is relevant to the work that we do here. Is it related to the orthogonalization tails?] 
 
-The crucial step to obtain the LMOs is the optimization of the localization functions, which is conventional achieved by simple Jacobi rotations~\cite{edmiston1963localized, barr1975improved} or exponential~\cite{berghold2000general} or Cayley parameterization of unitary transformations combined with line search methods.
-The Jacobi rotations, which are based on consecutive two-by-two rotations of orbitals pairs, are able to properly localize occupied orbitals, but the optimization process may be slow and converge to nonoptimal solutions, especially for large and complicated systems.
-Furthermore, the Jacobi rotations might not work at all in the case of virtual orbitals.
+To mitigate the undesirable orthogonality effects, metric-preserving unitary transformation has been applied to nonorthogonal orbitals~\cite{hoyvik2017generalising} and, in a more dramatic procedure, the unitary localization transformations have been replaced by with more general variable-metric nonsingular transformations~\cite{anderson1968self, diner1968fully, magnasco1974localized, payne1977hartree, mehler1977self, feng2004An_efficient, cui2010efficient, luo2020direct}. 
+%RZK: occupied NLMOs only?
+In the latter procedure, the generalization lifts the orthogonality constraint imposed on LMOs in the localization procedure and increases the number of degrees of freedom available to LMOs. 
+It has been found that occupied nonorthogonal LMOs~(NLMOs) obtained in a variable-metric procedure are indeed about $10-30\%$ more localized than OLMOs if measured by the value of the Boys-Foster function~\cite{feng2004An_efficient, liu2000nonorthogonal, luo2020direct}. 
 
+In contrast to metric-preserving unitary transformations, the variable-metric localization must be formulated to avoid
+linear dependencies of orbitals during the minimization of the localization function~\cite{liu2000nonorthogonal, feng2004An_efficient, cui2010efficient, peng2013effective}. 
+One approach to overcome the linear dependence problem, is to fix the centers of NLMOs~\cite{feng2004An_efficient, cui2010efficient} at the positions guessed from the knowledge of bonding patterns in the system~\cite{cui2010efficient} or at the centers of OLMOs~\cite{feng2004An_efficient}. 
+Another more recent approach is to augment the localization function with a term that measures the deviation from the orthogonality and penalizes the states that are too close to linear dependence~\cite{luo2020direct}. The latter reformulation of variable-metric localization allows not only to determine optimal positions of the NLMOs' centers in a unconstrained and straightforward minimization procedure but to choose the desired balance between the orthogonality and locality of the orbitals. 
+
+%RZK: Is this problem relevant to our current discussion? Unfortunately, The recent study has surprisingly shown that a pair of $\sigma$ and $\pi$ bonds tend to generated mixed $\tau$ and $\tau'$ orbitals for nonorthogonal LMOs~(NLMOs). NLMO-abbreviation
+%RZK- related: The Pipek-Mezey localization function is know for the ability to preserve the separation of $\sigma$ and $\pi$ bonds, but the recent study has demonstrated the $\sigma$-$\pi$ separation cannot be expected for NLMOs~\cite{luo2020direct}.
+
+
+\textbf{Algorithms.} 
+
+A variety of methods and algorithms have been developed to construct LMOs. 
+In the case of OLMOs, the orthogonality is preserved through Jacobi sweeps~\cite{edmiston1963localized, barr1975improved} or by exponential parameterization of unitary transformations~\cite{berghold2000general}. 
+
+Pioneering work by Luenberger [28] and Gabay [29] convert the constrained optimization problem [over unitary matrices] into an unconstrained problem, on an appropriate differentiable manifold.
+
+%[RZZK: combine with previous?] For periodic systems, several efficient optimization algorithms have been proposed to construct Wannier function~\cite{marzari1997maximally, berghold2000general, marzari2012maximally, jonsson2017theory}. 
+%
+%RZK: What algorithm is used in:
+%marzari2012maximally, marzari1997maximally
+%jonsson2017theory
+%
+Jacobi sweeps -- an early localization algorithm cpnsisting of a consecutive mixing of orbitals pairs -- approach to localize orbitals. Because of its simplicity, the Jacobi optimization process is often slow and rarely converges in the case of virtual orbitals~\cite{RZK-citation-is-needed,subotnik?}. 
+
+%RZK: Crazy rotations -- citation needed. What is the essence of the algorithm?
+
+%RZK: What is the main advantage of 
+
+Line methods 
 The line search methods have been found to be more efficient than the two-by-two orbital transformation for occupied orbitals, even for the simplest steepest descent approach~\cite{edmiston1965localized}.
-The conjugate gradient methods, which also predict the new direction only based on the gradient, fail to significantly improve the efficiency compared with the steepest descent method as initially expected.~\cite{ryback1978application}
-Multiple second-order methods have also been suggested to accelerate the localization process of occupied orbitals by using the information from the gradient and hessian.~\cite{leonard1982quadratically, kari1984parametrization}
+Conjugate gradient methods, which are typically outperform the steepest descent algorithm, fail to significantly improve the efficiency of the localization procedure~\cite{ryback1978application}.
+Multiple second-order methods have also been suggested to accelerate the localization process of occupied orbitals by using the information from the gradient and Hessian.~\cite{leonard1982quadratically, kari1984parametrization}
 Even though the Hessian involved methods are more time consuming compared with first-order methods, they successfully reduce the necessary amount of iterations by 1-2 orders of magnitude~\citet{leonard1982quadratically}.
-The Quasi-Newton methods such as Broyden-Fletcher-Goldfarb-Shanno~(BFGS) algorithm have also been implemented to localize molecular orbitals.~\cite{kari1984parametrization}
+The quasi-Newton methods such as Broyden-Fletcher-Goldfarb-Shanno~(BFGS) algorithm have also been implemented to localize molecular orbitals.~\cite{kari1984parametrization}
 
-Due to the fact that there are multiple not well separated local minimum of the localization functions in the case of virtual orbitals~\cite{subotnik2005fast}, convergence is slow and painful for both first-order and second-order line search methods.
-Moreover, the negative Hessian eigenvalues in the initial iterations of orbital localization prevent correctly predicting new directions, therefore the line search methods may fail in the early stage of the optimization process.
+In the case of virtual OLMOs, 
+Due to the fact that there are multiple not well separated local minimum of the localization functions in the case of virtual orbitals~\cite{subotnik2005fast} convergence is slow for line search methods even with the .
+Moreover, the negative Hessian eigenvalues in the initial iterations of orbital localization prevent correctly predicting new directions, therefore the line search methods may fail in the early stage of the optimization process~\cite{RZK-citation-is-needed}.
 
-More recently, the trust region methods have been demonstrated as an ideal optimization algorithm to localize both occupied and virtual orbitals with various localization functions.~\cite{jansik2011local, hoyvik2012trust, hoyvik2012orbital,hoyvik2013pipek}
+More recently, the trust region methods have been demonstrated as an ideal optimization algorithm to localize both occupied and virtual orbitals with various localization functions.~\cite{jansik2011local, hoyvik2012trust, hoyvik2012orbital, hoyvik2013pipek}
 However, the comparison between different localization functions has suggested the virtual orbitals obtained by Boy-Foster and Pipek-Mezey schemes are less localized than more advanced and complicated localization schemes.~\cite{hoyvik2013localized} 
 
 Multiple optimization methods have also been implemented for localizing nonorthogonal orbitals.
@@ -111,110 +142,134 @@ The line search methods such as conjugated gradient~\cite{liu2000nonorthogonal},
 
 In this work, we designed, tested and compared a variety of line search and trust region algorithms to perform direct unconstrained variable-metric localization of occupied and virtual orbitals. [Currently, there are no reports/methods for variable-metric localization of virtual orbitals (is it true?). Here, we do not only discuss optimization algorithms but also compare, for the first time, virtual NLMOs generated with Boys and PM localization functions.]
 
+[Line search methods depend on the line step size? Discussion ]
+[Do we expect more significant reduction in orbital locality for virtual NLMOs than for occupied NLMOs?]
 
 \section{Methodology}
-\subsection{Theory and Implementation}
-In this work, the conventional tensor notation is used to work with the nonorthogonal orbitals~\cite{head1998tensor}: covariant quantities are denoted with subscripts, contravariant quantities with superscripts and summation is implied over the same covariant and contravariant orbital indices. Summation is not implied if two indices are both covariant. 
 
-In order to obtain a set of nonorthogonal localized molecular orbitals, the conventional localization function $\Omega_L$ has been suggested to eliminates unphysical states with linearly dependent orbitals by introducing a penalty function  $\Omega_P$.~\cite{luo2020direct} 
-%
-\begin{equation} \label{eq:fun-overall}
-\begin{split}
-\Omega = \Omega_L + c_P \Omega_P, \\
-\end{split}
-\end{equation}
-%
-where $c_P > 0$ is the penalty strength.
-The NLMOs $\ket{i}$ are expressed as a linear combination of one-electron states $\ket{j_0}$
+\subsection{Theory}
 
+Conventional tensor notation is used to manipulate nonorthogonal orbitals~\cite{head1998tensor}: covariant quantities are denoted with subscripts, contravariant quantities -- with superscripts. A summation is implied over the same covariant and contravariant orbital indices. Summation is not implied if two indices are both covariant or if indices do not refer to orbitals.
+
+In order to obtain a set of nonorthogonal LMOs, which tend to be more localized than orthogonal LMOs, the orthogonality constraint is replaced with the weaker normalization constraint. Thus, the coefficients in the linear expansion of NLMOs $\ket{j}$ in terms of the initial one-electron states $\ket{i_0}$
 %
 \begin{equation}
 \begin{split}
-\ket{i} = \ket{j_0} {A^j}_i 
+\ket{j} = \ket{i_0} {A^i}_j 
 \end{split}
 \end{equation}
 %
-The initial occupied one-electron states are not required to be canonical or orthogonal but need to be normalized and linearly independent, which both preserve the generality of the method and guarantee the overlap matrix is invertible. The initial virtual orbitals are randomly generated followed by projecting out the occupied subspace and orthogonalization.
+are not required to form a unitary matrix. The normalization constraint is imposed on NLMOs by expressing the coefficients in terms of independent optimization parameters denoted with lowercase $\mathbf{a}$
+%
+\begin{equation}
+\begin{split}
+{A^i}_j = {a^i}_{j} ({a^k}_{j} \sigma^0_{kl}{a^l}_{j})^{-\frac{1}{2}} \equiv {a^i}_{j} N_j ,
+\end{split}
+\end{equation}
+%
+where the $\mathbf{a}$-dependent normalization coefficient $N_j$ is defined for brevity. Here and below, and $\sigma_0$ and $\sigma$ denote overlap matrices of the initial orbitals and NLMOs
+%
+\begin{equation} \label{eq:sigma}
+\begin{split}
+\sigma_{ji}^0 &= \braket{j_0}{i_0} \\
+\sigma_{kl} &= \braket{k}{l} = {A^j}_k \sigma_{ji}^0{A^i}_l
+\end{split}
+\end{equation}
+%
+Note that the initial occupied one-electron states are not required to be canonical or orthogonal but need to be normalized and linearly independent. 
 
-The Berghold localization function~\cite{resta1998quantum, resta1999electron, berghold2000general}  adopted in this work is equivalent to the Boys-Foster localization scheme~\cite{berghold2000general, resta1999electron} for gas-phase system and only able to describe the electronic states within the  $\Gamma$-point approximation for periodic system:
+Without the orthogonality constraint, a conventional localization function $\Omega_L$ must be augmented by a penalty function $\Omega_P$ that prevents NLMOs from becoming linearly dependent during the optimization~\cite{luo2020direct}
+%
+\begin{equation} \label{eq:fun-overall}
+\begin{split}
+\Omega(\mathbf{A}) = \Omega_L(\mathbf{A}) + c_P \Omega_P(\mathbf{A})
+\end{split}
+\end{equation}
+%
+where $c_P > 0$ is the penalty strength. Although many penalty functions can be envisioned its has been found that
+%
+\begin{equation} \label{eq:fun-pen}
+\begin{split}
+\Omega_P(\mathbf{A}) = - \ln \det \left[ \sigma (\mathbf{A}) \right],
+\end{split}
+\end{equation}
+%
+works well with a variety of optimization algorithms. %RZK, perhaps because [the determinant of] the overlap is quadratic function of the expansion coefficients $\mathbf{A}$ and is approximately quadratic with respect to optimization parameters $\mathbf{a}$.
+%
+Since NLMOs remain normalized in the optimization procedure, the determinant of $\sigma$ lies in the $(0,1]$ interval. It is 1 for orthogonal NLMOs and 0 for linearly dependent NLMOs. Consequently, the penalty function between 0 and $+\infty$ for these two extreme cases, respectively, making linearly dependent state inaccessible in the localization procedure with finite penalty strength $c_P$. 
+
+It is convenient to write the penalty strength $c_P$ as a product of a dimensionless parameter $\alpha$ and the initial value of the localization function 
+%
+\begin{equation} \label{eq:cp-beta}
+\begin{split} 
+c_P = \alpha \, \Omega_L(\mathbf{I})
+\end{split}
+\end{equation}
+%
+This factorization makes units of the localization and penalty terms consistent. The value of $\alpha$ must be optimized to achieve a desirable compromise between orbital locality and linear independence. A simple strategy to determine $\alpha$ is to set it initially to a sufficiently large value and then gradually decrease it until the determinant of the overlap of NLMOs drops below a desired threshold $\text{D}_{\text{tar}} \in (0,1]$. It has been found~\cite{luo2020direct} that the initial value 
+%
+\begin{equation} \label{eq:alpha-init}
+\begin{split} 
+\alpha^{\text{init}}= \left(\ln\frac{\det\sigma(\mathbf{I})}{\text{D}_{\text{tar}}}\right)^{-1}
+\end{split}
+\end{equation}
+%
+is sufficiently large to ensure linear independence of NLMOs during the first crucial steps of the localization but, at the same time, is not significantly larger than its optimal value.
+
+The localization functions adopted in this work can be written as
 %
 \begin{equation} \label{eq:fun-loc}
 \begin{split}
 \Omega_L(\mathbf{A}) &= - \sum_K \sum_i \omega_K \vert z_{i}^{K} \vert^2, \\
-z_{i}^{K} &= {A^m}_i B^{K}_{mn} {A^n}_i, \\
-B^{K}_{mn} &= \bra{m_0} \E^{\imi \mathbf{G}_K \cdot \mathbf{\op{r}}} \ket{n_0}
+z_{i}^{K} & =  {A^m}_i \bra{m_0} \op{B}^K \ket{n_0} {A^n}_i = {A^m}_i B^{K}_{mn} {A^n}_i
+\end{split}
+\end{equation}
+%
+with index $i$ referring to NLMOs and other variables having different meaning depending on the localization method. 
+
+The Berghold~\cite{berghold2000general} localization function $\Omega_L^{\text{B}}$ is equivalent to the Boys-Foster localization scheme~\cite{berghold2000general, resta1999electron} for gas-phase system. For periodic systems, the Berghold function is a generalization of the Resta function~\cite{resta1998quantum, resta1999electron} to three dimensions and simulation cells of general shape and symmetry. It is suitable for the $\Gamma$-point-only description of electronic states.
+%
+\begin{equation} \label{eq:berghold}
+\begin{split}
+\op{B}^{K} &= \E^{\imi \mathbf{G}_K \cdot \mathbf{\op{r}}}
 \end{split}
 \end{equation}
 %
 where $\mathbf{\op{r}}$ is the position operator in three dimensions, $\omega_K$ and $\mathbf{G}_K$ are suitable sets of weights and reciprocal lattice vectors, respectively, labeled by index $K$~\cite{silvestrelli1999maximally, berghold2000general}. 
 
-We also implement the Pipek-Mezey localization function~\cite{pipek1989fast,lehtola2014pipek} to investigate and compare the locality of virtual NLMOs generated with Boys-Foster and Pipek-Mezey localization functions.:
+In the Pipek-Mezey~\cite{pipek1989fast,lehtola2014pipek} localization function $\Omega_L^{\text{PM}}$
 %
 \begin{equation} \label{eq:pipek}
 \begin{split}
-\Omega_L^{\text{PM}}(\mathbf{A}) &= - \sum_{K=1}^{\text{Atoms}} \sum_i \vert z_{i}^{K} \vert^2, \\
-z_{i}^{K} &= {A^m}_i B^{K}_{mn} {A^n}_i, \\
-B^{K}_{mn} &= \frac{1}{2} \sum_{\mu \in K} \bra{m_0}  \left( \ketbra{\chi_{\mu}}{\chi^{\mu}} + \ketbra{\chi^{\mu}}{\chi_{\mu}} \right) \ket{n_0}
+%\Omega_L^{\text{PM}}(\mathbf{A}) &= - \sum_{K=1}^{\text{Atoms}} \sum_i \vert z_{i}^{K} \vert^2, \\
+%z_{i}^{K} &= {A^m}_i B^{K}_{mn} {A^n}_i, \\
+%B^{K}_{mn} &= \frac{1}{2} \sum_{\mu \in K} \bra{m_0}  \left( \ketbra{\chi_{\mu}}{\chi^{\mu}} + \ketbra{\chi^{\mu}}{\chi_{\mu}} \right) \ket{n_0}
+\op{B}^{K} &= \frac{1}{2} \sum_{\mu \in K} \left( \ketbra{\chi_{\mu}}{\chi^{\mu}} + \ketbra{\chi^{\mu}}{\chi_{\mu}} \right)
 \end{split}
 \end{equation}
 %
-where $z_{i}^{K}$ is the (real) contribution of orbital $i$ to the Mulliken charge of atom $K$, $\ket{\chi_\mu}$ and $\ket{\chi^\mu}$ are atom-centered covariant and contravariant basis set functions~\cite{silvestrelli1999maximally, berghold2000general}. The summation over $\mu$ is written explicitly to emphasize that it is restricted to the basis functions centered on atom $K$. 
-The Pipek-Mezey localization function is know for the ability to preserve the separation of $\sigma$ and $\pi$ bonds, but the recent study has demonstrated the $\sigma$-$\pi$ separation cannot be expected for NLMOs~\cite{luo2020direct}.
+$z_{i}^{K}$ is the contribution of orbital $i$ to the Mulliken charge of atom $K$, $\ket{\chi_\mu}$ and $\ket{\chi^\mu}$ are atom-centered covariant and contravariant basis set functions, atomic weights $\omega_K$ are all set to one and the imaginary part of $z_{i}^{K}$ is zero~\cite{silvestrelli1999maximally, berghold2000general}. The summation over $\mu$ is written explicitly to emphasize that it is restricted to the basis functions centered on atom $K$. 
 
-The penalty function is defined as in Eq.~(\ref{eq:fun-pen}) since the determinant of the NLMO overlap matrix $\sigma$ is suggested as a convenient measurement of linear dependence of orbitals. 
-%
-\begin{equation} \label{eq:fun-pen}
-\begin{split}
-\Omega_P(\mathbf{A}) &= - \ln \det \left[ \sigma (\mathbf{A}) \right], \\
-\sigma_{kl} &= \braket{k}{l} = {A^j}_k \sigma_{ji}^0{A^i}_l
-%= (\mathbf{A}^\dagger \mathbf{T}^\dagger \mathbf{ S T A})_{kl},
-\end{split}
-\end{equation}
-%
-The penalty strength $c_P$ plays an important role during the optimization procedure, so the initial value of  $c_P$ should be wisely chosen  to balance  approximately the localization and penalty components of $\Omega$, which has been proposed to achieve the reduction in $\Omega_L$ upon the minimization of $\Omega$ has the same order of magnitude as the change in the penalty  $c_P\Omega_P$.
-%
-\begin{equation} \label{eq:cp-beta}
-\begin{split} 
-%\Omega_L(\mathbf{I}) + c_P \Omega_P(\mathbf{I}) & \sim \Omega_{L}(\mathbf{A}^{\ast}) - c_P \ln \text{D}_{\text{tar}} \\
-c_P^{\text{init}} & \sim \frac{ \Omega_{L}(\mathbf{I}) - \Omega_{L}(\mathbf{A}^{\ast}) }{ \Omega_{P}(\mathbf{A}^{\ast}) - \Omega_{P}(\mathbf{I}) } = \frac{ \beta_L^{\ast} }{ \beta_P^{\ast} } \times \Omega_{L}(\mathbf{I}) \equiv \alpha \times \Omega_L(\mathbf{I})
-\end{split}
-\end{equation}
-%
-where $\mathbf{A}^{\ast}$ denotes the (yet unknown) solution to the minimization problem, 
-%
-\begin{equation} 
-\begin{split} 
-\beta_L^{\ast} \equiv \frac{\Omega_L(\mathbf{I})- \Omega_L(\mathbf{A}^{\ast})}{\Omega_L(\mathbf{I})} \in [0,1]
-\end{split}
-\end{equation}
-%
-is the (positive) expected relative reduction in the localization function, and 
-%
-\begin{equation} \label{eq:betap}
-\begin{split} 
-\beta_P^{\ast} \equiv \ln \frac{\det \sigma(\mathbf{I})}{ \det \sigma(\mathbf{A}^{\ast}) } \approx \ln \frac{\det \sigma(\mathbf{I})}{ \text{D}_{\text{tar}} } \equiv \beta_P > 0
-\end{split}
-\end{equation}
-%
-is the logarithm of the ratio of the initial and final determinants.
-By assuming the maximum possible value of $\beta_L^{\ast}=1$, $\alpha = \ln^{-1} 10$ should be an appropriated estimation for the optimization of canonical orbitals to the NLMOs with determinant $ \text{D}_{\text{tar}} \approx 0.1$.
+The unconstrained minimization of function $\Omega$ can be carried out with a variety of algorithms, all of which require the first derivative with respect to the independent parameters (i.e. the gradient) and some of which can benefit from exact or approximate second derivatives (i.e. the Hessian). %These first and second derivatives can be conveniently written in terms of the first and second derivatives with respect to mixing coefficients $\mathbf{A}$.
 
-The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$  required in Eq.~(\ref{eq:descent_dir}) is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
+The gradient ${G_i}^j \equiv \frac{\partial \Omega}{\partial {a^i}_j}$ is a sum of the localization ${L_i}^j \equiv \frac{\partial \Omega_L}{\partial {a^i}_j}$ and penalty ${P_i}^j \equiv \frac{\partial \Omega_P}{\partial {a^i}_j}$ components
 %
 \begin{equation} \label{eq:grad}
 \begin{split}
-G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
+{G_i}^{j} = {L_i}^{j} + c_P {P_i}^{j}
 \end{split}
 \end{equation}
 %
-
+These components can be readily expressed in terms of the derivatives with respect to the transformation coefficients $\tilde{X}{_k}^l \equiv \frac{\partial \Omega_X}{\partial {A^k}_l}$
 %
 \begin{equation} \label{eq:grad-convert}
 \begin{split}
-{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - ( \sigma_{in}^0 {A^n}_j ) ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j 
+{X_i}^j & = \tilde{X}{_k}^l \frac{\partial {A^k}_l}{\partial {a^i}_j} = \left[ \tilde{X}{_i}^j - A_{ij} ( {A^m}_j \tilde{X}{_m}^j ) \right] N_j
 \end{split}
 \end{equation}
 %
+where $X$ is either $L$ or $P$ and covariant coefficients arise from their contravariant-covariant counterparts $A_{ij} = \sigma_{in}^0 {A^n}_j$. To clarify the tensor notation, the summation is not implied over $j$ in the equation above because this index appears in the left-hand side of the equation. The same convention is used in equations below.
+
 \begin{equation} \label{eq:grad-loc}
 \begin{split}
 \tilde{L}{_k}^l & = - \sum_K {4 \omega_K} \times \\ 
@@ -225,45 +280,45 @@ G{_k}^{l} = L{_k}^{l} + c_P P{_k}^{l}.
 %
 \begin{equation} \label{eq:grad-pen}
 \begin{split}
-\tilde{P}{_k}^l & = -2 \sigma_{km}^0 {A^m}_n \sigma^{nl}
+\tilde{P}{_k}^l & = -2  \sigma_{km}^0 A{^{m}}_{n} \sigma^{nl} = -2 A{_k}^{l}
 \end{split}
 \end{equation}
 %
-If the gradient in Eq.~(\ref{eq:grad-loc}) is computed for the Pipek-Mezey localization function, weights $\omega_K$ are equal to one and the imaginary part of $z_{i}^{K}$ is equal to zero.
+The equation above defines covariant-contravariant coefficients $A{_k}^{l}$. Note that the penalty term ensures that that the overlap matrix remains not only invertible but also well-conditioned. Thus, its inverse, $\sigma^{nl}$, can be computed efficiently. 
 
-
-
-The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \partial{a^s}_t}$ is also expressed as the sum of the localization Eq.~(\ref{eq:hessian-loc}) and penalty Eq.~(\ref{eq:hessian-pen}) components
-
-
+The Hessian ${H_{is}}^{jt} \equiv \frac{\partial^2 \Omega}{\partial {a^i}_j \partial{a^s}_t}$ is also a sum of the localization $\bar{L}{_{is}}^{jt} \equiv \frac{\partial^2 \Omega_L}{\partial {a^i}_j \partial{a^s}_t}$ and penalty $\bar{P}{_{is}}^{jt} \equiv \frac{\partial^2 \Omega_P}{\partial {a^i}_j \partial{a^s}_t}$ components
+%
+\begin{equation} \label{eq:hessian}
+\begin{split}
+H{_{is}}^{jt} = \bar{L}{_{is}}^{jt} + c_P\, \bar{P}{_{is}}^{jt}
+\end{split}
+\end{equation}
+%
+These components can be expressed in terms of the second derivatives with respect to the transformation coefficients $\tilde{\bar{X}}{_{kx}}^{ly} \equiv \frac{\partial^2 \Omega_X}{\partial {A^k}_l \partial {A^x}_y}$ and also in terms of the first derivative $\tilde{X}{_k}^l$ defined above. Here, $X$ stands for either $L$ or $P$. %Using the fact that \frac{\partial {A^k}_j}{\partial {a^i}_j} 
 %
 \begin{equation} \label{eq:hessian-convert}
 \begin{split}
-{Y_{is}}^{jt} &= \sum_{k,x} \tilde{Y}_{kx}^{jt} \frac{\partial {A^k}_j}{\partial {a^i}_j} \frac{\partial {A^x}_t}{\partial {a^s}_t} + \sum_{k} \tilde{X_k}^j \frac{\partial {A^k}_l}{\partial {a^i}_j \partial{a^s}_t}  \\
-&= \left[ \tilde{Y}{_{js}}^{jt} - \sum_{x}\left(\tilde{Y}{_{ix}}^{jt} {A^x}_t \right)\left(\sigma^0 A\right)_{st} - \right.\\
-&\left. - \sum_{k}\left(\tilde{Y}{_{ks}}^{jt} {A^k}_j\right)\left(\sigma^0 A\right)_{ij} + \right.\\
-&\left. + \sum_{k,x}\left({A^k}_j \tilde{Y}{_{kx}}^{jt} {A^x}_t\right)\left(\sigma^0 A\right)_{ij}\left(\sigma^0 A\right)_{st} \right] \times N_j N_t + \\
-&+ \left[ -\tilde{X_i}^t \left(\sigma^0 A \right)_{st} - \tilde{X_s}^t \left(\sigma^0 A \right)_{it} - \sum_{k} \left( \tilde{X_k}^t {A^k}_t \right)\sigma^0_{is}  + \right.\\
-&\left. + 3 \sum_{k} \left(\tilde{X_k}^t {A^k}_t \right) \left(\sigma^0 A\right)_{it} \left(\sigma^0 A\right)_{st} \right] \times N_{t}^2
+\bar{X}{_{is}}^{jt} &= \tilde{\bar{X}}{_{kx}}^{ly} \frac{\partial {A^k}_l}{\partial {a^i}_j} \frac{\partial {A^x}_y}{\partial {a^s}_t} + \tilde{X}{_k}^l \frac{\partial^2 {A^k}_l}{\partial {a^i}_j \partial{a^s}_t} = \\
+&= \left[ \tilde{\bar{X}}{_{is}}^{jt} - \left(\tilde{\bar{X}}{_{ix}}^{jt} {A^x}_t \right) A_{st} - \left({A^k}_j \tilde{\bar{X}}{_{ks}}^{jt} \right) A_{ij} + \right.\\
+&\left. + \left({A^k}_j \tilde{\bar{X}}{_{kx}}^{jt} {A^x}_t\right) A_{ij} A_{st} \right] N_j N_t + \\
+&+ \delta_{jt} \left[ \left(\tilde{X}{_k}^t {A^k}_t \right) \left( 3 A_{it} A_{st} - \sigma^0_{is} \right) - \right.\\
+&\left.  -\tilde{X}{_i}^t A_{st} - \tilde{X}{_s}^t A_{it} \right] N_{t}^2
 \end{split}
 \end{equation}
 %
-
-
 %
 \begin{equation} \label{eq:hessian-loc}
 \begin{split}
-\tilde{M}{_{is}}^{jt} &= - \sum_K {4 \omega_K} \times \\ 
-&\times \left[  \operatorname{Re}(B^{K}_{is}) \operatorname{Re}(z_{t}^{K}) + 2 \operatorname{Re}(B^{K}_{in}){A^{n}}_{t} \operatorname{Re}(B^{K}_{sq}){A^{q}}_{t} +  \right. \\
-&\left. + \operatorname{Im}(B^{K}_{is}) \operatorname{Im}(z_{t}^{K}) + 2 \operatorname{Im}(B^{K}_{in}){A^{n}}_{t} \operatorname{Im}(B^{K}_{sq}){A^{q}}_{t}  \right] \times \delta_{jt}
+\tilde{\bar{L}}{_{kx}}^{jt} &= - \sum_K {4 \omega_K}  \delta_{jt} \times \\ 
+&\times \left[  \operatorname{Re}(B^{K}_{kx}) \operatorname{Re}(z_{t}^{K}) + 2 \operatorname{Re}(B^{K}_{kn}){A^{n}}_{t} \operatorname{Re}(B^{K}_{xq}){A^{q}}_{t} +  \right. \\
+&\left. + \operatorname{Im}(B^{K}_{kx}) \operatorname{Im}(z_{t}^{K}) + 2 \operatorname{Im}(B^{K}_{kn}){A^{n}}_{t} \operatorname{Im}(B^{K}_{xq}){A^{q}}_{t}  \right]
 \end{split}
 \end{equation}
 %
-
 %
 \begin{equation} \label{eq:hessian-pen}
 \begin{split}
-\tilde{Q}{_{is}}^{jt} = 2\left(\sigma_{im}^0 {A^m}_n \sigma^{nt}\right)\left(\sigma_{sp}^0 {A^p}_q \sigma^{qj}\right)
+\tilde{\bar{P}}{_{kx}}^{jt} = 2 {A_k}^t {A_x}^j
 \end{split}
 \end{equation}
 %
@@ -346,6 +401,7 @@ The hessian ${H_{is}}^{jt} \equiv \frac{\partial \Omega}{\partial {a^i}_j \parti
 \end{algorithm}
 \caption{\label{fig:ls} Line search algorithm for the optimization of NLMOs.}
 \end{figure}
+
 Multidimensional line search approach are the most popular optimization methods, which determine a descent direction along which the objective function will be reduced followed by computing a step size that discover how far to move along that direction.
 %
 \begin{equation} \label{eq:LS_methods}
@@ -354,11 +410,13 @@ a_{k+1} = a_{k} + \alpha_{k}D_{k}
 \end{split}
 \end{equation}
 %
+where RZK: define your variables, $\alpha$ is a bad choice for the step size because $\alpha$ is already used in the penalty strength.
+
 The descent direction has been suggested by various methods. In this work, we will implement and compare the NLMO optimization between gradient descent, conjugate gradient~(CG),  \emph{quasi}-Newton methods such as limited-memory Broyden–Fletcher–Goldfarb–Shanno~(BFGS) ,and hybrid CG-BFGS. The general descent direction of gradient methods takes the following form:
 %
 \begin{equation} \label{eq:descent_dir}
 \begin{split}
-D_{k+1} = -G_{k+1} + \beta_k D{k}
+D_{k+1} = -G_{k+1} + \beta_k D_{k}
 \end{split}
 \end{equation}
 %
@@ -479,8 +537,17 @@ The trust region methods adopt a different approach to update the step direction
 
 
 \section{Results and discussion}
-\subsection{Locality of virtual NLMOs}
+\subsection{Computational details}
 
+RZK: this needs to be adapted from our previous work. 
+
+To test the localization procedure, we constructed NLMOs for several systems ranging from a simple water molecule to complex molecules with non-trivial bonding patterns and to large periodic systems. 
+For all systems, the initial CMOs were obtained using the conventional diagonalization-based SCF procedure implemented in the electronic structure module of CP2K. 
+The Becke-Lee-Yang-Parr generalized gradient approximation~\cite{becke1988density, lee1988development} was used as the exchange-correlation functional.
+Goedecker-Teter-Hutter pseudopotentials~\cite{goedecker1996separable} were used together with a triple-$\zeta$ atom-centered Gaussian basis set with two sets of polarization functions for all atoms. 
+The energy cutoff was set at 600 Ry to define the auxiliary plane-wave basis set in the construction of the effective Hamiltonian. 
+The integration over the Brillouin zone was performed using the $\Gamma$-point approximation.
+%RZK: The initial virtual orbitals are randomly generated followed by projecting out the occupied subspace and orthogonalization.
 
 \begin{table*}[htbp]
 \caption{The relative reduction in the localization function and the final determinant of the occupied and virtual NLMO overlap.}
@@ -559,6 +626,9 @@ Average & 20 & 0.069 & & \\
 
 \section{Conclusions}
 
+Questions:
+1. Should we include newton method and Trust-region Dogleg?
+2. Print out virtual orbitals
 
 \section{Acknowledgments} 
 
